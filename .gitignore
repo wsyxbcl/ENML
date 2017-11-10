@@ -4,5 +4,7 @@ test/*
 .idea/*
 *.png
 *.txt
+*.csv
+*.npy
 *.rar
 test.py
