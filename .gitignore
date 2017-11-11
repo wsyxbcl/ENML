@@ -1,6 +1,7 @@
 */__pycache__/*
 data/*
 test/*
+keras_env/*
 .idea/*
 *.png
 *.txt
