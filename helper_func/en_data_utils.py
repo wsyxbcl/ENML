@@ -16,6 +16,7 @@ def get_dataset(dataset_dir, x_range):
     Get data from csv file, do the augmentation, seperate the training set and 
     the test set, then save to npy file for further uses.
     """
+    # TODO Random slice feature
     Y = []
     X = []
     # import csv data
@@ -31,10 +32,11 @@ def get_dataset(dataset_dir, x_range):
         X.append(x) # m*n list
     coordinates = [data_list[i][0] for i in x_range]
 
-    X_np = np.array(X).T # n*m numpy array
-    Y_np = np.array(Y).T # 1*m numpy array
-    coordinates_np = np.array(coordinates).T
+    X_np = np.array(X) # m*n numpy array
+    Y_np = np.array(Y) # m*c numpy array
+    coordinates_np = np.array(coordinates)
     #TODO Set seperated folders
+
     np.save(dataset_dir+'/'+'x_orig', X_np)
     np.save(dataset_dir+'/'+'y_orig', Y_np)
     np.save(dataset_dir+'/'+'coordinates', coordinates_np)
@@ -51,19 +53,19 @@ def plot_dataset(X, Y, coordinates, save_dir):
     """
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    for i in range(np.shape(X)[1]):
-        y = np.argwhere(Y[:, i] == 1)[0][0] + 1
-        ax.plot(coordinates, X[:, i], label=str(y))
+    for i in range(np.shape(X)[0]):
+        y = np.argwhere(Y[i, :] == 1)[0][0] + 1
+        ax.plot(coordinates, X[i, :], label=str(y))
         ax.set_xlabel('time/ms')
         ax.set_ylabel('Current/A')
         ax.legend(loc='best')
-        plt.savefig(save_dir+'/'+'test'+'.png', dpi=300)
+    plt.savefig(save_dir+'/'+'plot_test'+'.png', dpi=300)
 
 if __name__ == '__main__':
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/'
-    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/'
-    get_dataset(dataset_dir, range(7000, 8000))
+    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171112_test'
+    get_dataset(dataset_dir, range(7936, 8000))
     x_orig, y_orig, coordinates = load_dataset(dataset_dir)
-    train_x_set = x_orig - np.mean(x_orig, axis=0)
+    train_x_set = x_orig - np.mean(x_orig, axis=1).reshape(np.shape(x_orig)[0], 1)
     train_y_set = y_orig
     plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir)
