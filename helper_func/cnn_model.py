@@ -37,19 +37,19 @@ def identity_block(X, f, filters, stage, block):
     X_shortcut = X
     
     # First component of main path
-    X = Conv1D(filters=F1, kernel_size=1, strides= 1, name=conv_name_base+'2a', kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Conv1D(filters=F1, kernel_size=1, strides= 1, name=conv_name_base+'2a', kernel_initializer='glorot_uniform')(X)
     # X = BatchNormalization(axis = 3, name = bn_name_base + '2a')(X)
     X = Activation('relu')(X)
     
     ### START CODE HERE ###
     
     # Second component of main path (≈3 lines)
-    X = Conv1D(filters=F2, kernel_size=f, strides= 1, padding='same', name=conv_name_base+'2b', kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Conv1D(filters=F2, kernel_size=f, strides= 1, padding='same', name=conv_name_base+'2b', kernel_initializer='glorot_uniform')(X)
     # X = BatchNormalization(axis=3, name=bn_name_base+'2b')(X)
     X = Activation('relu')(X)
 
     # Third component of main path (≈2 lines)
-    X = Conv1D(filters=F3, kernel_size=1, strides= 1, name=conv_name_base+'2c', kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Conv1D(filters=F3, kernel_size=1, strides= 1, name=conv_name_base+'2c', kernel_initializer='glorot_uniform')(X)
     # X = BatchNormalization(axis=3, name=bn_name_base+'2c')(X)
 
     # Final step: Add shortcut value to main path, and pass it through a RELU activation (≈2 lines)
@@ -86,23 +86,23 @@ def convolutional_block(X, f, filters, stage, block, s=2):
 
     ##### MAIN PATH #####
     # First component of main path 
-    X = Conv1D(F1, 1, strides=s, name=conv_name_base+'2a', kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Conv1D(F1, 1, strides=s, name=conv_name_base+'2a', kernel_initializer='glorot_uniform')(X)
     # X = BatchNormalization(axis = 3, name = bn_name_base + '2a')(X)
     X = Activation('relu')(X)
     
     ### START CODE HERE ###
 
     # Second component of main path (≈3 lines)
-    X = Conv1D(F2, f, strides=1, padding='same', name=conv_name_base+'2b', kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Conv1D(F2, f, strides=1, padding='same', name=conv_name_base+'2b', kernel_initializer='glorot_uniform')(X)
     # X = BatchNormalization(axis=3, name=bn_name_base+'2b')(X)
     X = Activation('relu')(X)
 
     # Third component of main path (≈2 lines)
-    X = Conv1D(F3, 1, strides=1, name=conv_name_base+'2c', kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Conv1D(F3, 1, strides=1, name=conv_name_base+'2c', kernel_initializer='glorot_uniform')(X)
     # X = BatchNormalization(axis=3, name=bn_name_base+'2c')(X)
 
     ##### SHORTCUT PATH #### (≈2 lines)
-    X_shortcut = Conv1D(F3, 1, strides=s, name=conv_name_base+'1', kernel_initializer=glorot_uniform(seed=0))(X_shortcut)
+    X_shortcut = Conv1D(F3, 1, strides=s, name=conv_name_base+'1', kernel_initializer='glorot_uniform')(X_shortcut)
     # X_shortcut = BatchNormalization(axis=3, name=bn_name_base+'1')(X_shortcut)
 
     # Final step: Add shortcut value to main path, and pass it through a RELU activation (≈2 lines)
@@ -140,7 +140,7 @@ def ResNet1D50(input_shape, classes):
     X = ZeroPadding1D(padding=3)(X_input)
     
     # Stage 1
-    X = Conv1D(64, 7, strides=2, name='conv1', kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Conv1D(64, 7, strides=2, name='conv1', kernel_initializer='glorot_uniform')(X)
     # X = BatchNormalization(axis = 3, name = 'bn_conv1')(X)
     X = Activation('relu')(X)
     X = MaxPooling1D(3, strides=2)(X)
@@ -178,7 +178,7 @@ def ResNet1D50(input_shape, classes):
 
     # output layer
     X = Flatten()(X)
-    X = Dense(classes, activation='softmax', name='fc'+str(classes), kernel_initializer=glorot_uniform(seed=0))(X)
+    X = Dense(classes, activation='softmax', name='fc'+str(classes), kernel_initializer='glorot_uniform')(X)
     
     
     # Create model
@@ -197,13 +197,14 @@ if __name__ == '__main__':
     train_x_set = x_orig - np.mean(x_orig, axis=1).reshape(np.shape(x_orig)[0], 1)
     # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
     train_x_set = train_x_set.reshape(train_x_set.shape[0], train_x_set.shape[1], 1)
+    train_x_set = np.multiply(train_x_set, 1e8)
     # Got question here, (m, n, 1)???
     train_y_set = y_orig
 
     model = ResNet1D50(input_shape=(train_x_set.shape[1], 1), classes=train_y_set.shape[1])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(train_x_set, train_y_set, epochs = 2, batch_size = 32)
+    model.fit(train_x_set, train_y_set, epochs = 64, batch_size = 32)
     
     # preds = model.evaluate(X_test, Y_test)
     # print ("Loss = " + str(preds[0]))
