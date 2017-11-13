@@ -3,6 +3,7 @@ import csv
 import re
 from dir_walker import walker
 from keras.utils.np_utils import to_categorical
+from sklearn.model_selection import train_test_split
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 # matplotlib.use('Agg')
@@ -45,13 +46,13 @@ def load_dataset(dataset_dir):
     x_orig = np.load(dataset_dir+'/'+'x_orig.npy')
     y_orig = np.load(dataset_dir+'/'+'y_orig.npy')
     coordinates = np.load(dataset_dir+'/'+'coordinates.npy')
-    return x_orig, y_orig, coordinates
+    x_train, x_test, y_train, y_test = train_test_split(x_orig, y_orig, test_size=0.3)
+    return x_train, y_train, x_test, y_test, coordinates
 
 def plot_dataset(X, Y, coordinates, save_dir):
     """
     Get n*m dimensional X, plot them to given coordinates
     """
-    # TODO bug here, need to be changed to fit keras's onehot y
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     for i in range(np.shape(X)[0]):
@@ -64,10 +65,13 @@ def plot_dataset(X, Y, coordinates, save_dir):
 
 if __name__ == '__main__':
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/'
-    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171112_test'
+    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/plot_test'
+    # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171112_test'
     get_dataset(dataset_dir, range(7000, 8000))
     # get_dataset(dataset_dir, range(7936, 8000))
-    x_orig, y_orig, coordinates = load_dataset(dataset_dir)
-    train_x_set = x_orig - np.mean(x_orig, axis=1).reshape(np.shape(x_orig)[0], 1)
-    train_y_set = y_orig
+    x_train, y_train, x_test, y_test, coordinates = load_dataset(dataset_dir)
+    train_x_set = x_train - np.mean(x_train, axis=1).reshape(np.shape(x_train)[0], 1)
+    train_y_set = y_train
+    test_x_set = x_test - np.mean(x_test, axis=1).reshape(np.shape(x_test)[0], 1)
+    test_y_set = y_test
     # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir)

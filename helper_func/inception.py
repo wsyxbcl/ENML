@@ -23,7 +23,7 @@ def conv1d_bn(x, nb_filter, len_filter, padding='same', strides=1):
                padding=padding,
                kernel_regularizer=regularizers.l2(0.00004),
                kernel_initializer=initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='normal', seed=None))(x)
-    x = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(x)
+    # x = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(x)
     x = Activation('relu')(x)
     return x
 
@@ -39,7 +39,8 @@ def block_inception_a(input):
     branch_2 = conv1d_bn(branch_2, 96, 3)
     branch_2 = conv1d_bn(branch_2, 96, 3)
 
-    branch_3 = AveragePooling1D(3, strides=1, padding='same')(input)
+    # branch_3 = AveragePooling1D(3, strides=1, padding='same')(input)
+    branch_3 = MaxPooling1D(3, strides=1, padding='same')(input)
     branch_3 = conv1d_bn(branch_3, 96, 1)
 
     x = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
@@ -128,7 +129,8 @@ def inception_test(input_shape, num_classes):
     x = inception(inputs)
 
     # # Final pooling and prediction
-    x = AveragePooling1D(8, padding='valid')(x)
+    # x = AveragePooling1D(8, padding='valid')(x)
+    x = MaxPooling1D(8, padding='valid')(x)
     x = Flatten()(x)
     x = Dense(units=num_classes, activation='softmax')(x)
 
