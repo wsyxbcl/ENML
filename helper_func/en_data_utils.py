@@ -72,7 +72,7 @@ def plot_dataset(X, Y, coordinates, save_dir):
 
 if __name__ == '__main__':
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/'
-    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171113_test'
+    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171113_test_64'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171112_test'
     get_dataset(dataset_dir, range(7000, 8000))
     # get_dataset(dataset_dir, range(7936, 8000))
