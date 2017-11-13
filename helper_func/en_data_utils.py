@@ -42,11 +42,11 @@ def get_dataset(dataset_dir, x_range):
     np.save(dataset_dir+'/'+'y_orig', Y_np)
     np.save(dataset_dir+'/'+'coordinates', coordinates_np)
 
-def load_dataset(dataset_dir):
+def load_dataset(dataset_dir, test_ratio=0.3):
     x_orig = np.load(dataset_dir+'/'+'x_orig.npy')
     y_orig = np.load(dataset_dir+'/'+'y_orig.npy')
     coordinates = np.load(dataset_dir+'/'+'coordinates.npy')
-    x_train, x_test, y_train, y_test = train_test_split(x_orig, y_orig, test_size=0.3)
+    x_train, x_test, y_train, y_test = train_test_split(x_orig, y_orig, test_size=test_ratio)
     return x_train, y_train, x_test, y_test, coordinates
 
 def plot_dataset(X, Y, coordinates, save_dir):
@@ -65,7 +65,7 @@ def plot_dataset(X, Y, coordinates, save_dir):
 
 if __name__ == '__main__':
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/'
-    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/plot_test'
+    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171113_test'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171112_test'
     get_dataset(dataset_dir, range(7000, 8000))
     # get_dataset(dataset_dir, range(7936, 8000))
