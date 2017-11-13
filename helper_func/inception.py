@@ -6,7 +6,7 @@ from keras.layers.merge import concatenate
 from keras import regularizers
 from keras import initializers
 from keras.models import Model
-
+from keras.utils import plot_model
 from en_data_utils import *
 
 import keras.backend as K
@@ -138,7 +138,7 @@ def inception_test(input_shape, num_classes):
     return model
 
 if __name__ == '__main__':
-    root_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171113_test_64'
+    root_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171113_test_256'
 
     x_train, y_train, x_test, y_test, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=0.2)
     train_x_set = x_train - np.mean(x_train, axis=1).reshape(np.shape(x_train)[0], 1)
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     model = inception_test(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(train_x_set, train_y_set, validation_split=0.25, epochs = 128, batch_size = 32)
+    model.fit(train_x_set, train_y_set, validation_split=0.25, epochs = 64, batch_size = 32)
     
     preds = model.evaluate(test_x_set, test_y_set)
     print ("Loss = " + str(preds[0]))
@@ -190,6 +190,9 @@ if __name__ == '__main__':
     plt.savefig(get_save_path(root_dir+'/'+'training_result', 'acc.png'), dpi=300)
     plt.clf()
 
+    # Save model
+    model.save(get_save_path(root_dir+'/'+'training_result', 'model.h5'))
+
     # model.summary()
-    # plot_model(model, to_file='model.png')
+    plot_model(model, to_file=get_save_path(root_dir+'/'+'training_result', 'model.png'))
     # VG(model_to_dot(model).create(prog='dot', format='svg'))
