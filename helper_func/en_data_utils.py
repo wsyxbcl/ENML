@@ -69,7 +69,7 @@ def remove_baseline(x, degree=3):
     x_removed = x - baseline_values
     return baseline_values, x_removed
 
-def plot_dataset(X, Y, coordinates, save_dir):
+def plot_dataset(X, Y, coordinates, save_dir, filename):
     """
     Get n*m dimensional X, plot them to given coordinates
     """
@@ -81,7 +81,7 @@ def plot_dataset(X, Y, coordinates, save_dir):
         ax.set_xlabel('time/ms')
         ax.set_ylabel('Current/A')
         ax.legend(loc='best')
-    plt.savefig(get_save_path(save_dir, 'test.png'), dpi=300)
+    plt.savefig(get_save_path(save_dir, filename), dpi=300)
     plt.clf()
 
 if __name__ == '__main__':
@@ -91,17 +91,29 @@ if __name__ == '__main__':
     get_dataset(dataset_dir, range(7000, 8000))
     # get_dataset(dataset_dir, range(7936, 8000))
     train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
+    plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set')
+    plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set')
+    
+    # Remove base line
+    # train_x_set = remove_baseline(train_x_set, degree=1)
+    for i in range(test_x_set.shape[0]):
+        baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
+    for i in range(train_x_set.shape[0]):
+        baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot')
+    
+    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_test')
+    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_train')
+    
 
     # Test baseline function here
-    baseline_values, x_removed = remove_baseline(test_x_set[0], degree=3)
-    x_removed = x_removed - np.mean(x_removed)
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-    ax.plot(coordinates, baseline_values, label='baseline')
-    ax.plot(coordinates, test_x_set[0], label='raw data')
-    ax.plot(coordinates, x_removed, label='baseline removed')
-    ax.legend(loc='best')
-    plt.savefig(get_save_path(dataset_dir+'/baseline', 'baseline.png'), dpi=300)
+    # baseline_values, x_removed = remove_baseline(test_x_set[0], degree=3)
+    # x_removed = x_removed - np.mean(x_removed)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(1,1,1)
+    # ax.plot(coordinates, baseline_values, label='baseline')
+    # ax.plot(coordinates, test_x_set[0], label='raw data')
+    # ax.plot(coordinates, x_removed, label='baseline removed')
+    # ax.legend(loc='best')
+    # plt.savefig(get_save_path(dataset_dir+'/baseline', 'baseline.png'), dpi=300)
