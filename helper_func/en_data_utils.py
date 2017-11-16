@@ -28,6 +28,7 @@ def get_dataset(files_dir, x_range):
     # TODO Random slice feature
     Y = []
     X = []
+    coordinates = []
     # import csv data
     for filename, subdir in walker(files_dir, re.compile('training(.*?)_\d+.csv')):
         y = re.findall('training(\d+)_\d+.csv', filename)[-1]
@@ -38,14 +39,22 @@ def get_dataset(files_dir, x_range):
             data_list = list(reader)[1:] # Skip the first line
 
         x = [float(data_list[i][1]) for i in x_range] # len(x_range)*1 list here
+        coordinate = [float(data_list[i][0]) for i in x_range]
         X.append(x) # m*n list
-    coordinates = [data_list[i][0] for i in x_range]
+        coordinates.append(coordinate)
+    
     Y_one_hot = to_categorical(Y, num_classes=9)
     X_np = np.array(X) # m*n numpy array
     Y_np = np.array(Y_one_hot) # m*c numpy array
     coordinates_np = np.array(coordinates)
+    return X_np, Y_np, coordinates_np
 
-    save_dir = files_dir+'/'+'dataset'
+
+def save_dataset(X_np, Y_np, coordinates_np, save_dir):
+    """
+    Save given dataset to save_dir.(.npy)
+    """
+    # save_dir = files_dir+'/'+'dataset'
     np.save(get_save_path(save_dir, 'x_orig'), X_np)
     np.save(get_save_path(save_dir, 'y_orig'), Y_np)
     np.save(get_save_path(save_dir, 'coordinates'), coordinates_np)
@@ -73,11 +82,12 @@ def plot_dataset(X, Y, coordinates, save_dir, filename):
     """
     Get n*m dimensional X, plot them to given coordinates
     """
+    #TODO need rewrite for coordinate has been changed
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     for i in range(np.shape(X)[0]):
         y = np.argwhere(Y[i, :] == 1)[0][0] + 1
-        ax.plot(coordinates, X[i, :], label=str(y))
+        ax.plot(coordinates[i, :], X[i, :], label=str(y))
         ax.set_xlabel('time/ms')
         ax.set_ylabel('Current/A')
         ax.legend(loc='best')
@@ -85,23 +95,44 @@ def plot_dataset(X, Y, coordinates, save_dir, filename):
     plt.clf()
 
 if __name__ == '__main__':
-    # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/'
-    dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/baseline'
-    # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171112_test'
-    get_dataset(dataset_dir, range(7000, 8000))
-    # get_dataset(dataset_dir, range(7936, 8000))
+    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171116_8_500'
+    # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/baseline'
+    # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
+
+    # TODO combine slice and cropping in one function
+    X_np_1, Y_np_1, coordinates_np_1 = get_dataset(dataset_dir, range(4000, 4500))
+    X_np_2, Y_np_2, coordinates_np_2 = get_dataset(dataset_dir, range(4500, 5000))
+    X_np_3, Y_np_3, coordinates_np_3 = get_dataset(dataset_dir, range(5000, 5500))
+    X_np_4, Y_np_4, coordinates_np_4 = get_dataset(dataset_dir, range(5500, 6000))
+    X_np_5, Y_np_5, coordinates_np_5 = get_dataset(dataset_dir, range(6000, 6500))
+    X_np_6, Y_np_6, coordinates_np_6 = get_dataset(dataset_dir, range(6500, 7000))
+    X_np_7, Y_np_7, coordinates_np_7 = get_dataset(dataset_dir, range(7000, 7500))
+    X_np_8, Y_np_8, coordinates_np_8 = get_dataset(dataset_dir, range(7500, 8000))
+
+    save_dataset(np.concatenate((X_np_1, X_np_2, X_np_3, X_np_4, X_np_5, X_np_6, X_np_7, X_np_8)),
+                 np.concatenate((Y_np_1, Y_np_2, Y_np_3, Y_np_4, Y_np_5, Y_np_6, Y_np_7, Y_np_8)),
+                 np.concatenate((coordinates_np_1, coordinates_np_2, coordinates_np_3, coordinates_np_4, coordinates_np_5, coordinates_np_6, coordinates_np_7, coordinates_np_8)),
+                 dataset_dir+'/'+'dataset')
+
     train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
-    plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set')
-    plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set')
+    print("Shape of train_x_set:")
+    print(train_x_set.shape)
+    print("Shape of test_x_set:")
+    print(test_x_set.shape)
+    print("Shape of train_y_set:")
+    print(train_y_set.shape)
+    print("Shape of test_y_set:")
+    print(test_y_set.shape)
+    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set')
+    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set')
     
     # Remove base line
-    # train_x_set = remove_baseline(train_x_set, degree=1)
-    for i in range(test_x_set.shape[0]):
-        baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
-    for i in range(train_x_set.shape[0]):
-        baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
-    train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-    test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+    # for i in range(test_x_set.shape[0]):
+    #     baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
+    # for i in range(train_x_set.shape[0]):
+    #     baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
+    # train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+    # test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     
     # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_test')
     # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_train')

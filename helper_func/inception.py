@@ -181,8 +181,8 @@ def simple_CNN(input_shape, num_classes):
     net = MaxPooling1D(2, strides=2, padding='valid')(net)
     net = conv1d_bn(net, 256, 3, padding='same')
     net = MaxPooling1D(2, strides=2, padding='valid')(net)
-    net = conv1d_bn(net, 512, 3, padding='same')
-    net = MaxPooling1D(2, strides=2, padding='valid')(net)
+    # net = conv1d_bn(net, 512, 3, padding='same')
+    # net = MaxPooling1D(2, strides=2, padding='valid')(net)
     net = Flatten()(net)
     net = Dense(units=num_classes, activation='softmax')(net)
     
@@ -190,18 +190,18 @@ def simple_CNN(input_shape, num_classes):
     return model
 
 if __name__ == '__main__':
-    model_name = 'simple_CNN'
-    root_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171114_test_1000'
+    model_name = 'simple_CNN_256_baseline_3'
+    root_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171116_8_500'
 
     save_dir = root_dir+'/'+model_name
 
-    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=0.2)
+    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=0.01)
     # Baseline removal
     # TODO Maybe vectorilize this.
     for i in range(test_x_set.shape[0]):
-        baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
+        baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=3)
     for i in range(train_x_set.shape[0]):
-        baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
+        baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=3)
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     test_x_set = np.multiply(test_x_set, 1e8)
 
     # x_orig, y_orig, coordinates = load_dataset(dataset_dir)
-    # TODO Random shuffle and get training/test set
+
     # train_x_set = x_orig - np.mean(x_orig, axis=1).reshape(np.shape(x_orig)[0], 1)
     # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
     # train_x_set = train_x_set.reshape(train_x_set.shape[0], train_x_set.shape[1], 1)
@@ -227,7 +227,7 @@ if __name__ == '__main__':
     # model = simple_inception(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(train_x_set, train_y_set, validation_split=0.25, epochs = 64, batch_size = 32)
+    model.fit(train_x_set, train_y_set, validation_split=0.25, epochs = 32, batch_size = 32)
     
     preds = model.evaluate(test_x_set, test_y_set)
     print ("Loss = " + str(preds[0]))

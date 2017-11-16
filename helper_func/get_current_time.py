@@ -25,9 +25,11 @@ def get_i_t(source_file, output_file):
         print('Converted finished. Saved to '+output_file)
 
 if __name__ == '__main__':
-    rootdir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/test'
+    # rootdir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171108_p_curve'
+    rootdir = 'T:/college/last/finaldesign/ENML/data/CA_ascii/20171108_p_curve'
     count = 0
-    for filename, subdir in walker(rootdir, re.compile('training(.*?)(\d+)$')):
+    # for filename, subdir in walker(rootdir, re.compile('training(.*?)(\d+)$')):
+    for filename, subdir in walker(rootdir):
         print('Opening '+filename)
         get_i_t(subdir+'/'+filename, subdir+'/'+filename+'.csv')
         count += 1
