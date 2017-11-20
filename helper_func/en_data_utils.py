@@ -79,21 +79,24 @@ def remove_baseline(x, degree=3):
     x_removed = x - baseline_values
     return baseline_values, x_removed
 
-def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel='Current/A'):
+def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel='Current/A', trans=0.5):
     """
     Get n*m dimensional X, plot them to given coordinates
     """
     plt.style.use('ggplot')
+    # plt.style.use('Solarize_Light2')
     colors = plt.rcParams['axes.prop_cycle']
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     labels = []
+    color_label = -1
     for i in range(np.shape(X)[0]):
         y = np.argwhere(Y[i, :] == 1)[0][0] + 1
         if y in labels:
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y-1], label='')
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label='')
         else:
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y-1], label=str(y))
+            color_label += 1
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label=str(y))
             labels.append(y)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -130,7 +133,7 @@ if __name__ == '__main__':
     # X_np_8, Y_np_8, coordinates_np_8 = get_dataset(dataset_dir, range(7500, 8000))
 
     # FFT test module
-    X_np, Y_np, coordinates_np = get_dataset(dataset_dir, range(4000, 8000))
+    X_np, Y_np, coordinates_np = get_dataset(dataset_dir, range(6976, 8000))
     plot_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/plot', 'X_orig')
     X_baseline_removed = np.copy(X_np)
     for i in range(X_np.shape[0]):
@@ -139,8 +142,34 @@ if __name__ == '__main__':
     X_norm = np.copy(X_baseline_removed)
     X_norm = X_baseline_removed - np.mean(X_baseline_removed, axis=1).reshape(np.shape(X_baseline_removed)[0], 1)
     plot_dataset(X_norm, Y_np, coordinates_np, dataset_dir+'/plot', 'X_norm')
+
     X_fft, freq = fft(X_norm, coordinates_np)
-    plot_dataset(np.abs(X_fft[:, :2000]), Y_np, freq[:, :2000], dataset_dir+'/plot', 'X_FFT', xlabel='Freq/Hz', ylabel='A')
+    half = int(X_norm.shape[1]/2)
+    X_fft_plot = np.abs(X_fft[:, :half])
+    plot_dataset(X_fft_plot, Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT', xlabel='Freq/Hz', ylabel='A')
+    # Contrast to the first
+    plot_dataset(X_fft_plot - X_fft_plot[0], Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT_contrast', xlabel='Freq/Hz', ylabel='A')
+
+    # TODO Really in a hurry. Package these sutff...
+    X_fft_avg = np.copy(X_fft_plot[:7, :])
+    Y_fft_avg = np.copy(Y_np[:7, :])
+    X_fft_avg[0, :] = np.mean(X_fft_plot[:33, :], axis=0)
+    Y_fft_avg[0, :] = Y_np[0, :]
+    X_fft_avg[1, :] = np.mean(X_fft_plot[33:64, :], axis=0)
+    Y_fft_avg[1, :] = Y_np[33, :]
+    X_fft_avg[2, :] = np.mean(X_fft_plot[64:96, :], axis=0)
+    Y_fft_avg[2, :] = Y_np[64, :]
+    X_fft_avg[3, :] = np.mean(X_fft_plot[96:128, :], axis=0)
+    Y_fft_avg[3, :] = Y_np[96, :]
+    X_fft_avg[4, :] = np.mean(X_fft_plot[128:160, :], axis=0)
+    Y_fft_avg[4, :] = Y_np[138, :]
+    X_fft_avg[5, :] = np.mean(X_fft_plot[160:192, :], axis=0)
+    Y_fft_avg[5, :] = Y_np[160, :]
+    X_fft_avg[6, :] = np.mean(X_fft_plot[192:224, :], axis=0)
+    Y_fft_avg[6, :] = Y_np[192, :]
+
+    plot_dataset(X_fft_avg, Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg', xlabel='Freq/Hz', ylabel='A', trans=1)
+    plot_dataset(X_fft_avg - X_fft_avg[0, :], Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg_contrast', xlabel='Freq/Hz', ylabel='A', trans=1)
 
     # save_dataset(np.concatenate((X_np_1, X_np_2, X_np_3, X_np_4, X_np_5, X_np_6, X_np_7, X_np_8)),
     #              np.concatenate((Y_np_1, Y_np_2, Y_np_3, Y_np_4, Y_np_5, Y_np_6, Y_np_7, Y_np_8)),
