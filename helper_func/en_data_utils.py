@@ -79,21 +79,28 @@ def remove_baseline(x, degree=3):
     x_removed = x - baseline_values
     return baseline_values, x_removed
 
-def plot_dataset(X, Y, coordinates, save_dir, filename):
+def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel='Current/A'):
     """
     Get n*m dimensional X, plot them to given coordinates
     """
-    #TODO need rewrite for coordinate has been changed
+    plt.style.use('ggplot')
+    colors = plt.rcParams['axes.prop_cycle']
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
+    labels = []
     for i in range(np.shape(X)[0]):
         y = np.argwhere(Y[i, :] == 1)[0][0] + 1
-        ax.plot(coordinates[i, :], X[i, :], label=str(y))
-        ax.set_xlabel('time/ms')
-        ax.set_ylabel('Current/A')
+        if y in labels:
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y-1], label='')
+        else:
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y-1], label=str(y))
+            labels.append(y)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         ax.legend(loc='best')
     plt.savefig(get_save_path(save_dir, filename), dpi=300)
     plt.clf()
+    plt.close(fig)
 
 def fft(X, coordinates):
     n = X.shape[1]
@@ -133,7 +140,7 @@ if __name__ == '__main__':
     X_norm = X_baseline_removed - np.mean(X_baseline_removed, axis=1).reshape(np.shape(X_baseline_removed)[0], 1)
     plot_dataset(X_norm, Y_np, coordinates_np, dataset_dir+'/plot', 'X_norm')
     X_fft, freq = fft(X_norm, coordinates_np)
-    plot_dataset(np.abs(X_fft[:, :2000]), Y_np, freq[:, :2000], dataset_dir+'/plot', 'X_FFT')
+    plot_dataset(np.abs(X_fft[:, :2000]), Y_np, freq[:, :2000], dataset_dir+'/plot', 'X_FFT', xlabel='Freq/Hz', ylabel='A')
 
     # save_dataset(np.concatenate((X_np_1, X_np_2, X_np_3, X_np_4, X_np_5, X_np_6, X_np_7, X_np_8)),
     #              np.concatenate((Y_np_1, Y_np_2, Y_np_3, Y_np_4, Y_np_5, Y_np_6, Y_np_7, Y_np_8)),
