@@ -189,13 +189,47 @@ def simple_CNN(input_shape, num_classes):
     model = Model(inputs, net, name='simple_CNN')
     return model
 
+def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
+    """
+    Use trained model to predict y_estimate on test_x_set.
+    And plot y_estimate against test_y_set for further analysis.
+    """
+    m_test = test_x_set.shape[0]
+    classes = test_y_set.shape[1]
+    prob = model.predict(test_x_set)
+    y_estimate = prob.argmax(axis=-1)
+    y_truth = test_y_set.argmax(axis=-1)
+    y_correct = y_truth[np.argwhere(y_estimate==y_truth)][:, 0]
+    acc_total = y_correct.shape[0]/y_truth.shape[0]
+    print("Accuracy(total):%f"%acc_total)
+    print('Class\t#Samples\tTest Accuracy')
+    for i in range(classes):
+        num_sample = y_truth[np.argwhere(y_truth==i)].shape[0]
+        acc = y_correct[np.argwhere(y_correct==i)].shape[0] / num_sample
+        print('%d\t%d\t%f'%(i+1, num_sample, acc))
+    # prepare the np array for visualization
+    test_array = np.array([y_truth, y_estimate]).T
+    test_array = test_array[np.argsort(test_array[:, 0])]
+    idx = np.arange(m_test)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(idx, test_array[:, 0], label='Y')
+    ax.plot(idx, test_array[:, 1], label='Y_estimate', alpha=0.7)
+    ax.set_xlabel('Samples in test set')
+    ax.set_ylabel('Classes')
+    ax.legend(loc='best')
+    plt.savefig(get_save_path(save_dir, filename), dpi=300)
+    plt.clf()
+    plt.close(fig)
+
 if __name__ == '__main__':
-    model_name = 'simple_CNN_256_baseline_3'
+    model_name = 'simple_CNN_256_baseline_3_toseetest'
     root_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171116_8_500'
 
     save_dir = root_dir+'/'+model_name
 
-    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=0.01)
+    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=0.25)
     # Baseline removal
     # TODO Maybe vectorilize this.
     for i in range(test_x_set.shape[0]):
@@ -227,12 +261,13 @@ if __name__ == '__main__':
     # model = simple_inception(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(train_x_set, train_y_set, validation_split=0.25, epochs = 32, batch_size = 32)
+    model.fit(train_x_set, train_y_set, validation_split=0.25, epochs = 7, batch_size = 32)
     
     preds = model.evaluate(test_x_set, test_y_set)
     print ("Loss = " + str(preds[0]))
     print ("Test Accuracy = " + str(preds[1]))
 
+    test_analysis(model, test_x_set, test_y_set, save_dir+'/'+'training_result', 'test_result.png')
     # Plot the learning curve
     plt.plot(model.history.history['loss'])
     plt.plot(model.history.history['val_loss'])
