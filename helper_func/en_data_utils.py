@@ -25,7 +25,6 @@ def get_dataset(files_dir, x_range):
     Get data from csv file, do the augmentation, seperate the training set and 
     the test set, then save to npy file for further uses.
     """
-    # TODO Random slice feature
     Y = []
     X = []
     coordinates = []
@@ -81,7 +80,7 @@ def remove_baseline(x, degree=3):
 
 def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel='Current/A', trans=0.5):
     """
-    Get n*m dimensional X, plot them to given coordinates
+    Get m*n dimensional X, plot them to given coordinates
     """
     plt.style.use('ggplot')
     # plt.style.use('Solarize_Light2')
@@ -109,7 +108,7 @@ def fft(X, coordinates):
     n = X.shape[1]
     freq = np.copy(coordinates)
     # Convert ms to s
-    timestep = (coordinates_np[0,1]-coordinates_np[0,0]) * 0.001
+    timestep = (coordinates[0,1]-coordinates[0,0]) * 0.001
     X_fft = np.fft.fft(X, axis=1)
     freq[:] = np.fft.fftfreq(n, d=timestep)
     return X_fft, freq
@@ -151,6 +150,7 @@ if __name__ == '__main__':
     plot_dataset(X_fft_plot - X_fft_plot[0], Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT_contrast', xlabel='Freq/Hz', ylabel='A')
 
     # TODO Really in a hurry. Package these sutff...
+    # Average frenquency
     X_fft_avg = np.copy(X_fft_plot[:7, :])
     Y_fft_avg = np.copy(Y_np[:7, :])
     X_fft_avg[0, :] = np.mean(X_fft_plot[:33, :], axis=0)
