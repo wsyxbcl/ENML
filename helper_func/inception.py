@@ -224,12 +224,16 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     plt.close(fig)
 
 if __name__ == '__main__':
-    model_name = 'simple_CNN_256_baseline_3_toseetest'
+    model_name = 'simple_CNN_256_baseline_3_noFFT'
     root_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171116_8_500'
-
+    test_ratio = 0.25
+    validation_ratio = 0.25 # Percent of the traning set
+    training_epoch = 10
+    batch_size = 32
     save_dir = root_dir+'/'+model_name
+    FFT = 1
 
-    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=0.25)
+    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
     # Baseline removal
     # TODO Maybe vectorilize this.
     for i in range(test_x_set.shape[0]):
@@ -238,30 +242,34 @@ if __name__ == '__main__':
         baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=3)
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-    # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
-    train_x_set = train_x_set.reshape(train_x_set.shape[0], train_x_set.shape[1], 1)
-    train_x_set = np.multiply(train_x_set, 1e8)
-
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-    test_x_set = test_x_set.reshape(test_x_set.shape[0], test_x_set.shape[1], 1)
-    test_x_set = np.multiply(test_x_set, 1e8)
+    if FFT:
+        train_x_set, freq = fft(train_x_set, coordinates)
+        test_x_set, freq = fft(test_x_set, coordinates)
+        half = int(train_x_set.shape[1]/2)
+        train_x_set = np.abs(train_x_set[:, :half])
+        test_x_set = np.abs(test_x_set[:, :half])
+        freq = freq[:, :half]
+        # TODO color list problem here
+        plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
+        train_x_set = np.multiply(train_x_set, 1e7)
+        test_x_set = np.multiply(test_x_set, 1e7)    
+    else:
+        train_x_set = np.multiply(train_x_set, 1e8)
+        test_x_set = np.multiply(test_x_set, 1e8)
 
-    # x_orig, y_orig, coordinates = load_dataset(dataset_dir)
-
-    # train_x_set = x_orig - np.mean(x_orig, axis=1).reshape(np.shape(x_orig)[0], 1)
     # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
-    # train_x_set = train_x_set.reshape(train_x_set.shape[0], train_x_set.shape[1], 1)
-    # train_x_set = np.multiply(train_x_set, 1e8)
-    # Got question here, (m, n, 1)???
-    # train_y_set = y_orig.astype(float)
-    # train_y_set = y_orig
+    # which seems to be (m, n, 1) in this case.
+    train_x_set = train_x_set.reshape(train_x_set.shape[0], train_x_set.shape[1], 1)
+    test_x_set = test_x_set.reshape(test_x_set.shape[0], test_x_set.shape[1], 1)
+
 
     # model = inception_test(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
     model = simple_CNN(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
     # model = simple_inception(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(train_x_set, train_y_set, validation_split=0.25, epochs = 7, batch_size = 32)
+    model.fit(train_x_set, train_y_set, validation_split=validation_ratio, epochs=training_epoch, batch_size=batch_size)
     
     preds = model.evaluate(test_x_set, test_y_set)
     print ("Loss = " + str(preds[0]))
