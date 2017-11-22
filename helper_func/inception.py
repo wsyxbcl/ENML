@@ -201,12 +201,13 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     y_truth = test_y_set.argmax(axis=-1)
     y_correct = y_truth[np.argwhere(y_estimate==y_truth)][:, 0]
     acc_total = y_correct.shape[0]/y_truth.shape[0]
-    print("Accuracy(total):%f"%acc_total)
-    print('Class\t#Samples\tTest Accuracy')
-    for i in range(classes):
-        num_sample = y_truth[np.argwhere(y_truth==i)].shape[0]
-        acc = y_correct[np.argwhere(y_correct==i)].shape[0] / num_sample
-        print('%d\t%d\t%f'%(i+1, num_sample, acc))
+    with open(get_save_path(save_dir, filename+'.txt'), 'wt') as f:
+        print("Accuracy(total):%f"%acc_total, file=f)
+        print('Class\t#Samples\tTest Accuracy', file=f)
+        for i in range(classes):
+            num_sample = y_truth[np.argwhere(y_truth==i)].shape[0]
+            acc = y_correct[np.argwhere(y_correct==i)].shape[0] / num_sample
+            print('%d\t%d\t%f'%(i+1, num_sample, acc), file=f)
     # prepare the np array for visualization
     test_array = np.array([y_truth, y_estimate]).T
     test_array = test_array[np.argsort(test_array[:, 0])]
@@ -214,12 +215,16 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(idx, test_array[:, 0], label='Y')
-    ax.plot(idx, test_array[:, 1], label='Y_estimate', alpha=0.7)
+    ax.plot(idx, test_array[:, 0], label='Y', color=plt.rcParams['axes.prop_cycle'].by_key()['color'][0])
+    ax.scatter(idx, test_array[:, 1],
+               label='Y_estimate', 
+               marker='o',
+               c=plt.rcParams['axes.prop_cycle'].by_key()['color'][1], 
+               alpha=0.7)
     ax.set_xlabel('Samples in test set')
     ax.set_ylabel('Classes')
     ax.legend(loc='best')
-    plt.savefig(get_save_path(save_dir, filename), dpi=300)
+    plt.savefig(get_save_path(save_dir, filename+'.png'), dpi=300)
     plt.clf()
     plt.close(fig)
 
@@ -251,7 +256,7 @@ if __name__ == '__main__':
         test_x_set = np.abs(test_x_set[:, :half])
         freq = freq[:, :half]
         # TODO color list problem here
-        plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
+        # plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
         train_x_set = np.multiply(train_x_set, 1e7)
         test_x_set = np.multiply(test_x_set, 1e7)    
     else:
@@ -275,7 +280,7 @@ if __name__ == '__main__':
     print ("Loss = " + str(preds[0]))
     print ("Test Accuracy = " + str(preds[1]))
 
-    test_analysis(model, test_x_set, test_y_set, save_dir+'/'+'training_result', 'test_result.png')
+    test_analysis(model, test_x_set, test_y_set, save_dir+'/'+'training_result', 'test_set_result')
     # Plot the learning curve
     plt.plot(model.history.history['loss'])
     plt.plot(model.history.history['val_loss'])
