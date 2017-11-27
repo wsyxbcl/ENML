@@ -30,10 +30,11 @@ def get_dataset(files_dir, x_range):
     coordinates = []
     # import csv data
     for filename, subdir in walker(files_dir, re.compile('training(.*?)_\d+.csv')):
-        print(subdir+filename)
-        y = re.findall('training(\d+)_\d+.csv', filename)[-1]
+        # print(subdir+'/'+filename)
+        y = re.findall('training(\d+)_.*?.csv', filename)[-1]
         # y_one_hot = np.eye(9, dtype=int)[int(y) - 1]
-        Y.append(int(y) - 1)
+        Y.append(int(y)) # where y is 0-9
+        # Y.append(int(y) - 1) #where y is 1-9
         with open(subdir+'/'+filename, 'r') as f:
             reader = csv.reader(f)
             data_list = list(reader)[1:] # Skip the first line
@@ -42,8 +43,8 @@ def get_dataset(files_dir, x_range):
         coordinate = [float(data_list[i][0]) for i in x_range]
         X.append(x) # m*n list
         coordinates.append(coordinate)
-    
-    Y_one_hot = to_categorical(Y, num_classes=9)
+        # print(subdir+'/'+filename)
+    Y_one_hot = to_categorical(Y, num_classes=5)
     X_np = np.array(X) # m*n numpy array
     Y_np = np.array(Y_one_hot) # m*c numpy array
     coordinates_np = np.array(coordinates)
@@ -94,7 +95,10 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
         if y in labels:
             ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label='')
         else:
-            color_label += 1
+            if color_label >= 6:
+                color_label = 0
+            else:
+                color_label += 1
             ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label=str(y))
             labels.append(y)
         ax.set_xlabel(xlabel)
@@ -113,80 +117,84 @@ def fft(X, coordinates):
     freq[:] = np.fft.fftfreq(n, d=timestep)
     return X_fft, freq
 
+def get_slice_concat(raw_data_dir, num_slices, len_slice):
+    """
+    get data according to slice ranges, and concat to form dataset.
+    """
+    ranges = []
+    for i in range(num_slices):
+        ranges.append(list(range(-(i + 1) * len_slice, -i * len_slice)))
+    for i, r in enumerate(ranges):
+        if i == 0:
+            X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, r)
+        else:
+            X, Y, coordinates = get_dataset(raw_data_dir, r)
+            X_np = np.concatenate((X, X_np))
+            Y_np = np.concatenate((Y, Y_np))
+            coordinates_np = np.concatenate((coordinates, coordinates_np))
+    return X_np, Y_np, coordinates_np
+
 if __name__ == '__main__':
-    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/FFTfreq'
+    # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class5_len500'
+    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/baseline'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
+    raw_data_dir = dataset_dir+'/raw'
 
-    # TODO combine slice and cropping in one function, seperate cropped data and
-    # then add it to the train set?
-    # Maybe create a larger slice at first, then 3crop the training set but only
-    # 1crop the dev/test set.
-    # X_np_1, Y_np_1, coordinates_np_1 = get_dataset(dataset_dir, range(4000, 4500))
-    # X_np_2, Y_np_2, coordinates_np_2 = get_dataset(dataset_dir, range(4500, 5000))
-    # X_np_3, Y_np_3, coordinates_np_3 = get_dataset(dataset_dir, range(5000, 5500))
-    # X_np_4, Y_np_4, coordinates_np_4 = get_dataset(dataset_dir, range(5500, 6000))
-    # X_np_5, Y_np_5, coordinates_np_5 = get_dataset(dataset_dir, range(6000, 6500))
-    # X_np_6, Y_np_6, coordinates_np_6 = get_dataset(dataset_dir, range(6500, 7000))
-    # X_np_7, Y_np_7, coordinates_np_7 = get_dataset(dataset_dir, range(7000, 7500))
-    # X_np_8, Y_np_8, coordinates_np_8 = get_dataset(dataset_dir, range(7500, 8000))
+    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, 1, 500)
 
-    # FFT test module
-    X_np, Y_np, coordinates_np = get_dataset(dataset_dir, range(6976, 8000))
-    plot_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/plot', 'X_orig')
-    X_baseline_removed = np.copy(X_np)
-    for i in range(X_np.shape[0]):
-        baseline_values, X_baseline_removed[i] = remove_baseline(X_np[i], degree=1)
-    plot_dataset(X_baseline_removed, Y_np, coordinates_np, dataset_dir+'/plot', 'X_baseline_removed')
-    X_norm = np.copy(X_baseline_removed)
-    X_norm = X_baseline_removed - np.mean(X_baseline_removed, axis=1).reshape(np.shape(X_baseline_removed)[0], 1)
-    plot_dataset(X_norm, Y_np, coordinates_np, dataset_dir+'/plot', 'X_norm')
+    # # FFT test module
+    # X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, range(4000, 8000))
+    # plot_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/plot', 'X_orig')
+    # X_baseline_removed = np.copy(X_np)
+    # for i in range(X_np.shape[0]):
+    #     baseline_values, X_baseline_removed[i] = remove_baseline(X_np[i], degree=1)
+    # plot_dataset(X_baseline_removed, Y_np, coordinates_np, dataset_dir+'/plot', 'X_baseline_removed')
+    # X_norm = np.copy(X_baseline_removed)
+    # X_norm = X_baseline_removed - np.mean(X_baseline_removed, axis=1).reshape(np.shape(X_baseline_removed)[0], 1)
+    # plot_dataset(X_norm, Y_np, coordinates_np, dataset_dir+'/plot', 'X_norm')
 
-    X_fft, freq = fft(X_norm, coordinates_np)
-    half = int(X_norm.shape[1]/2)
-    X_fft_plot = np.abs(X_fft[:, :half])
-    plot_dataset(X_fft_plot, Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT', xlabel='Freq/Hz', ylabel='A')
-    # Contrast to the first
-    plot_dataset(X_fft_plot - X_fft_plot[0], Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT_contrast', xlabel='Freq/Hz', ylabel='A')
+    # X_fft, freq = fft(X_norm, coordinates_np)
+    # half = int(X_norm.shape[1]/2)
+    # X_fft_plot = np.abs(X_fft[:, :half])
+    # plot_dataset(X_fft_plot, Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT', xlabel='Freq/Hz', ylabel='A')
+    # # Contrast to the first
+    # plot_dataset(X_fft_plot - X_fft_plot[0], Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT_contrast', xlabel='Freq/Hz', ylabel='A')
 
     # TODO Really in a hurry. Package these sutff...
     # Average frenquency
-    X_fft_avg = np.copy(X_fft_plot[:7, :])
-    Y_fft_avg = np.copy(Y_np[:7, :])
-    X_fft_avg[0, :] = np.mean(X_fft_plot[:33, :], axis=0)
-    Y_fft_avg[0, :] = Y_np[0, :]
-    X_fft_avg[1, :] = np.mean(X_fft_plot[33:64, :], axis=0)
-    Y_fft_avg[1, :] = Y_np[33, :]
-    X_fft_avg[2, :] = np.mean(X_fft_plot[64:96, :], axis=0)
-    Y_fft_avg[2, :] = Y_np[64, :]
-    X_fft_avg[3, :] = np.mean(X_fft_plot[96:128, :], axis=0)
-    Y_fft_avg[3, :] = Y_np[96, :]
-    X_fft_avg[4, :] = np.mean(X_fft_plot[128:160, :], axis=0)
-    Y_fft_avg[4, :] = Y_np[138, :]
-    X_fft_avg[5, :] = np.mean(X_fft_plot[160:192, :], axis=0)
-    Y_fft_avg[5, :] = Y_np[160, :]
-    X_fft_avg[6, :] = np.mean(X_fft_plot[192:224, :], axis=0)
-    Y_fft_avg[6, :] = Y_np[192, :]
+    # X_fft_avg = np.copy(X_fft_plot[:7, :])
+    # Y_fft_avg = np.copy(Y_np[:7, :])
+    # X_fft_avg[0, :] = np.mean(X_fft_plot[:33, :], axis=0)
+    # Y_fft_avg[0, :] = Y_np[0, :]
+    # X_fft_avg[1, :] = np.mean(X_fft_plot[33:64, :], axis=0)
+    # Y_fft_avg[1, :] = Y_np[33, :]
+    # X_fft_avg[2, :] = np.mean(X_fft_plot[64:96, :], axis=0)
+    # Y_fft_avg[2, :] = Y_np[64, :]
+    # X_fft_avg[3, :] = np.mean(X_fft_plot[96:128, :], axis=0)
+    # Y_fft_avg[3, :] = Y_np[96, :]
+    # X_fft_avg[4, :] = np.mean(X_fft_plot[128:160, :], axis=0)
+    # Y_fft_avg[4, :] = Y_np[138, :]
+    # X_fft_avg[5, :] = np.mean(X_fft_plot[160:192, :], axis=0)
+    # Y_fft_avg[5, :] = Y_np[160, :]
+    # X_fft_avg[6, :] = np.mean(X_fft_plot[192:224, :], axis=0)
+    # Y_fft_avg[6, :] = Y_np[192, :]
 
-    plot_dataset(X_fft_avg, Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg', xlabel='Freq/Hz', ylabel='A', trans=1)
-    plot_dataset(X_fft_avg - X_fft_avg[0, :], Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg_contrast', xlabel='Freq/Hz', ylabel='A', trans=1)
+    # plot_dataset(X_fft_avg, Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg', xlabel='Freq/Hz', ylabel='A', trans=1)
+    # plot_dataset(X_fft_avg - X_fft_avg[0, :], Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg_contrast', xlabel='Freq/Hz', ylabel='A', trans=1)
 
-    # save_dataset(np.concatenate((X_np_1, X_np_2, X_np_3, X_np_4, X_np_5, X_np_6, X_np_7, X_np_8)),
-    #              np.concatenate((Y_np_1, Y_np_2, Y_np_3, Y_np_4, Y_np_5, Y_np_6, Y_np_7, Y_np_8)),
-    #              np.concatenate((coordinates_np_1, coordinates_np_2, coordinates_np_3, coordinates_np_4, coordinates_np_5, coordinates_np_6, coordinates_np_7, coordinates_np_8)),
-    #              dataset_dir+'/'+'dataset')
-
-    # train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
-    # print("Shape of train_x_set:")
-    # print(train_x_set.shape)
-    # print("Shape of test_x_set:")
-    # print(test_x_set.shape)
-    # print("Shape of train_y_set:")
-    # print(train_y_set.shape)
-    # print("Shape of test_y_set:")
-    # print(test_y_set.shape)
-    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set')
-    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set')
+    save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
+    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
+    print("Shape of train_x_set:")
+    print(train_x_set.shape)
+    print("Shape of test_x_set:")
+    print(test_x_set.shape)
+    print("Shape of train_y_set:")
+    print(train_y_set.shape)
+    print("Shape of test_y_set:")
+    print(test_y_set.shape)
+    plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set.png')
+    plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set.png')
     
     # Remove base line
     # for i in range(test_x_set.shape[0]):
