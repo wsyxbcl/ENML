@@ -229,12 +229,12 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     plt.close(fig)
 
 if __name__ == '__main__':
-    model_name = 'simple_CNN_256_baseline_3_noFFT'
-    root_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/20171116_8_500'
+    model_name = 'simple_cnn_baseline1_fft1_batch512'
+    root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class5_len256'
     test_ratio = 0.25
-    validation_ratio = 0.25 # Percent of the traning set
-    training_epoch = 10
-    batch_size = 32
+    validation_ratio = 0.25 # splited from traning set
+    training_epoch = 128
+    batch_size = 512
     save_dir = root_dir+'/'+model_name
     FFT = 1
 
@@ -242,9 +242,9 @@ if __name__ == '__main__':
     # Baseline removal
     # TODO Maybe vectorilize this.
     for i in range(test_x_set.shape[0]):
-        baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=3)
+        baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
     for i in range(train_x_set.shape[0]):
-        baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=3)
+        baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)

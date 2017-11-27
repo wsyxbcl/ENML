@@ -89,17 +89,22 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     labels = []
-    color_label = -1
+    # color_label = -1
     for i in range(np.shape(X)[0]):
         y = np.argwhere(Y[i, :] == 1)[0][0] + 1
+        # if y in labels:
+        #     ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label='')
+        # else:
+        #     if color_label >= 6:
+        #         color_label = 0
+        #     else:
+        #         color_label += 1
+        #     ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label=str(y))
+        #     labels.append(y)
         if y in labels:
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label='')
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
         else:
-            if color_label >= 6:
-                color_label = 0
-            else:
-                color_label += 1
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label=str(y))
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label=str(y))
             labels.append(y)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -135,13 +140,14 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice):
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class5_len500'
-    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
+    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class5_len128'
+    # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/baseline'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
     raw_data_dir = dataset_dir+'/raw'
-
-    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, 1, 500)
+    num_slices = 32
+    len_slice = 128
+    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice)
 
     # # FFT test module
     # X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, range(4000, 8000))
@@ -193,8 +199,9 @@ if __name__ == '__main__':
     print(train_y_set.shape)
     print("Shape of test_y_set:")
     print(test_y_set.shape)
-    plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set.png')
-    plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set.png')
+    # plot_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/plot', 'dataset.png')
+    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set.png')
+    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set.png')
     
     # Remove base line
     # for i in range(test_x_set.shape[0]):
