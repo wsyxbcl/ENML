@@ -101,7 +101,7 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
     ax = fig.add_subplot(1, 1, 1)
     labels = []
     for i in range(np.shape(X)[0]):
-        y = np.argwhere(Y[i, :] == 1)[0][0] + 1
+        y = np.argwhere(Y[i, :] == 1)[0][0]
         if y in labels:
             # ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
             ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label='')
@@ -125,6 +125,43 @@ def fft(X, coordinates):
     freq[:] = np.fft.fftfreq(n, d=timestep)
     return X_fft, freq
 
+def fft_avg(test_x_set, test_y_set, num_classes):
+    """
+    Used to do average on x_set after FFT.
+    test_x_set here refers to any x dataset
+    """
+    y_label = np.argwhere(test_y_set==1)[:, 1]
+    y_label_sortindice = np.argsort(y_label)
+    y_label_sorted = y_label[y_label_sortindice]
+    test_x_set_sorted = test_x_set[y_label_sortindice]
+    test_y_set_sorted = test_y_set[y_label_sortindice]
+
+    turning_points = []
+    for i, label in enumerate(y_label_sorted):
+        if i == 0:
+            prev = y_label_sorted[0]
+        if label == prev:
+            continue
+        else:
+            prev = label
+            turning_points.append(i)
+
+    test_x_avg = np.copy(test_x_set[:num_classes, :])
+    test_y_avg = np.copy(test_y_set[:num_classes, :])
+    for i, point in enumerate(turning_points):
+        if i == 0:
+            test_x_avg[i, :] = np.mean(test_x_set_sorted[:point, :], axis=0)
+            test_y_avg[i, :] = test_y_set_sorted[0, :]
+        elif i == (num_classes - 2):
+            test_x_avg[i, :] = np.mean(test_x_set_sorted[turning_points[i - 1]:point, :], axis=0)
+            test_y_avg[i, :] = test_y_set_sorted[turning_points[i - 1], :]
+            test_x_avg[i + 1, :] = np.mean(test_x_set_sorted[point:, :], axis=0)
+            test_y_avg[i + 1, :] = test_y_set_sorted[point, :]
+        else:
+            test_x_avg[i, :] = np.mean(test_x_set_sorted[turning_points[i - 1]:point, :], axis=0)
+            test_y_avg[i, :] = test_y_set_sorted[turning_points[i - 1], :]
+    return test_x_avg, test_y_avg
+
 def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes):
     """
     get data according to slice ranges, and concat to form dataset.
@@ -145,56 +182,15 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes):
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class10_len512'
+    # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class10_len512'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
-    # dataset_dir = 'T:/college/last/finaldesign/ENML/model/20171117_class10_len512'
+    dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
     raw_data_dir = dataset_dir+'/raw'
-    num_slices = 8
-    num_classes = 10
+    num_slices = 2
+    num_classes = 8
     len_slice = 512
     X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes)
-
-    # # FFT test module
-    # X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, range(4000, 8000))
-    # plot_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/plot', 'X_orig')
-    # X_baseline_removed = np.copy(X_np)
-    # for i in range(X_np.shape[0]):
-    #     baseline_values, X_baseline_removed[i] = remove_baseline(X_np[i], degree=1)
-    # plot_dataset(X_baseline_removed, Y_np, coordinates_np, dataset_dir+'/plot', 'X_baseline_removed')
-    # X_norm = np.copy(X_baseline_removed)
-    # X_norm = X_baseline_removed - np.mean(X_baseline_removed, axis=1).reshape(np.shape(X_baseline_removed)[0], 1)
-    # plot_dataset(X_norm, Y_np, coordinates_np, dataset_dir+'/plot', 'X_norm')
-
-    # X_fft, freq = fft(X_norm, coordinates_np)
-    # half = int(X_norm.shape[1]/2)
-    # X_fft_plot = np.abs(X_fft[:, :half])
-    # plot_dataset(X_fft_plot, Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT', xlabel='Freq/Hz', ylabel='A')
-    # # Contrast to the first
-    # plot_dataset(X_fft_plot - X_fft_plot[0], Y_np, freq[:, :half], dataset_dir+'/plot', 'X_FFT_contrast', xlabel='Freq/Hz', ylabel='A')
-
-    # TODO Really in a hurry. Package these sutff...
-    # Average frenquency
-    # X_fft_avg = np.copy(X_fft_plot[:7, :])
-    # Y_fft_avg = np.copy(Y_np[:7, :])
-    # X_fft_avg[0, :] = np.mean(X_fft_plot[:33, :], axis=0)
-    # Y_fft_avg[0, :] = Y_np[0, :]
-    # X_fft_avg[1, :] = np.mean(X_fft_plot[33:64, :], axis=0)
-    # Y_fft_avg[1, :] = Y_np[33, :]
-    # X_fft_avg[2, :] = np.mean(X_fft_plot[64:96, :], axis=0)
-    # Y_fft_avg[2, :] = Y_np[64, :]
-    # X_fft_avg[3, :] = np.mean(X_fft_plot[96:128, :], axis=0)
-    # Y_fft_avg[3, :] = Y_np[96, :]
-    # X_fft_avg[4, :] = np.mean(X_fft_plot[128:160, :], axis=0)
-    # Y_fft_avg[4, :] = Y_np[138, :]
-    # X_fft_avg[5, :] = np.mean(X_fft_plot[160:192, :], axis=0)
-    # Y_fft_avg[5, :] = Y_np[160, :]
-    # X_fft_avg[6, :] = np.mean(X_fft_plot[192:224, :], axis=0)
-    # Y_fft_avg[6, :] = Y_np[192, :]
-
-    # plot_dataset(X_fft_avg, Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg', xlabel='Freq/Hz', ylabel='A', trans=1)
-    # plot_dataset(X_fft_avg - X_fft_avg[0, :], Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg_contrast', xlabel='Freq/Hz', ylabel='A', trans=1)
-
     save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
     # train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(dataset_dir+'/dataset')
@@ -208,7 +204,8 @@ if __name__ == '__main__':
     print(test_y_set.shape)
 
     # Visualization
-    num_pick = 10 * num_classes * num_slices
+    num_pick = 500
+    # num_pick = 10 * num_classes * num_slices
     plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=1)
 
     for i in range(test_x_set.shape[0]):
@@ -218,7 +215,7 @@ if __name__ == '__main__':
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-    FFT = 0
+    FFT = 1
     if FFT:
         train_x_set, freq = fft(train_x_set, coordinates_train)
         test_x_set, freq = fft(test_x_set, coordinates_test)
@@ -226,11 +223,13 @@ if __name__ == '__main__':
         train_x_set = np.abs(train_x_set[:, :half])
         test_x_set = np.abs(test_x_set[:, :half])
         freq = freq[:, :half]
-        # TODO color list problem here
-        # plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
         train_x_set = np.multiply(train_x_set, 1e7)
         test_x_set = np.multiply(test_x_set, 1e7) 
-        plot_dataset(test_x_set[:300], test_y_set[:300], freq, dataset_dir+'/plot', 'test_x_set_fft.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
+        plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], freq, dataset_dir+'/plot', 'test_fft.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
+        test_x_set_fft_avg, test_y_set_fft_avg = fft_avg(test_x_set[:num_pick], test_y_set[:num_pick], num_classes)
+        plot_dataset(test_x_set_fft_avg, test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg.png', xlabel='Freq/Hz', ylabel='A', trans=1)
+        plot_dataset(test_x_set_fft_avg - test_x_set_fft_avg[0, :], test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_contrast.png', xlabel='Freq/Hz', ylabel='A', trans=1)
+
     else:
         train_x_set = np.multiply(train_x_set, 1e8)
         test_x_set = np.multiply(test_x_set, 1e8)
@@ -243,8 +242,8 @@ if __name__ == '__main__':
     # train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     # test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     
-    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_test')
-    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_train')
+    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_test.png')
+    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_train.png')
     
 
     # Test baseline function here
