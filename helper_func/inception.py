@@ -238,7 +238,8 @@ if __name__ == '__main__':
     save_dir = root_dir+'/'+model_name
     FFT = 1
 
-    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
+    train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
+    
     # Baseline removal
     # TODO Maybe vectorilize this.
     for i in range(test_x_set.shape[0]):
@@ -249,13 +250,12 @@ if __name__ == '__main__':
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     if FFT:
-        train_x_set, freq = fft(train_x_set, coordinates)
-        test_x_set, freq = fft(test_x_set, coordinates)
+        train_x_set, freq = fft(train_x_set, coordinates_train)
+        test_x_set, freq = fft(test_x_set, coordinates_test)
         half = int(train_x_set.shape[1]/2)
         train_x_set = np.abs(train_x_set[:, :half])
         test_x_set = np.abs(test_x_set[:, :half])
         freq = freq[:, :half]
-        # TODO color list problem here
         # plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
         train_x_set = np.multiply(train_x_set, 1e7)
         test_x_set = np.multiply(test_x_set, 1e7)    

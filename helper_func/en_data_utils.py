@@ -44,7 +44,7 @@ def get_dataset(files_dir, x_range):
         X.append(x) # m*n list
         coordinates.append(coordinate)
         # print(subdir+'/'+filename)
-    Y_one_hot = to_categorical(Y, num_classes=5)
+    Y_one_hot = to_categorical(Y, num_classes=10)
     X_np = np.array(X) # m*n numpy array
     Y_np = np.array(Y_one_hot) # m*c numpy array
     coordinates_np = np.array(coordinates)
@@ -64,8 +64,8 @@ def load_dataset(dataset_dir, test_ratio=0.3):
     x_orig = np.load(dataset_dir+'/'+'x_orig.npy')
     y_orig = np.load(dataset_dir+'/'+'y_orig.npy')
     coordinates = np.load(dataset_dir+'/'+'coordinates.npy')
-    x_train, x_test, y_train, y_test = train_test_split(x_orig, y_orig, test_size=test_ratio)
-    return x_train, y_train, x_test, y_test, coordinates
+    x_train, x_test, y_train, y_test, coordinates_train, coordinates_test = train_test_split(x_orig, y_orig, coordinates, test_size=test_ratio)
+    return x_train, y_train, coordinates_train, x_test, y_test, coordinates_test
 
 def remove_baseline(x, degree=3):
     """
@@ -85,26 +85,29 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
     """
     plt.style.use('ggplot')
     # plt.style.use('Solarize_Light2')
-    colors = plt.rcParams['axes.prop_cycle']
+    # colors = plt.rcParams['axes.prop_cycle']
+    # Try Tableau data color here
+    tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),    
+                 (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),    
+                 (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),    
+                 (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),    
+                 (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
+    for i in range(len(tableau20)):    
+        r, g, b = tableau20[i]    
+        tableau20[i] = (r / 255., g / 255., b / 255.)
+
+
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     labels = []
-    # color_label = -1
     for i in range(np.shape(X)[0]):
         y = np.argwhere(Y[i, :] == 1)[0][0] + 1
-        # if y in labels:
-        #     ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label='')
-        # else:
-        #     if color_label >= 6:
-        #         color_label = 0
-        #     else:
-        #         color_label += 1
-        #     ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][color_label], alpha=trans, label=str(y))
-        #     labels.append(y)
         if y in labels:
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
+            # ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
+            ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label='')
         else:
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label=str(y))
+            # ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label=str(y))
+            ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label=str(y))
             labels.append(y)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -126,6 +129,7 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice):
     """
     get data according to slice ranges, and concat to form dataset.
     """
+    print("Getting slice and concatenating")
     ranges = []
     for i in range(num_slices):
         ranges.append(list(range(-(i + 1) * len_slice, -i * len_slice)))
@@ -137,16 +141,17 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice):
             X_np = np.concatenate((X, X_np))
             Y_np = np.concatenate((Y, Y_np))
             coordinates_np = np.concatenate((coordinates, coordinates_np))
+            print('%f'%(i/num_slices))
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class5_len128'
+    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class10_len512'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/baseline'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
     raw_data_dir = dataset_dir+'/raw'
-    num_slices = 32
-    len_slice = 128
+    num_slices = 8
+    len_slice = 512
     X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice)
 
     # # FFT test module
@@ -190,7 +195,8 @@ if __name__ == '__main__':
     # plot_dataset(X_fft_avg - X_fft_avg[0, :], Y_fft_avg, freq[:, :half], dataset_dir+'/plot', 'X_FFT_avg_contrast', xlabel='Freq/Hz', ylabel='A', trans=1)
 
     save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
-    train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
+    # train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
+    train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(dataset_dir+'/dataset')
     print("Shape of train_x_set:")
     print(train_x_set.shape)
     print("Shape of test_x_set:")
@@ -199,10 +205,34 @@ if __name__ == '__main__':
     print(train_y_set.shape)
     print("Shape of test_y_set:")
     print(test_y_set.shape)
-    # plot_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/plot', 'dataset.png')
-    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'test_x_set.png')
-    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'train_x_set.png')
-    
+
+    # Visualization
+    plot_dataset(test_x_set[:300], test_y_set[:300], coordinates_test[:300], dataset_dir+'/plot', 'test_orig.png', trans=1)
+
+    for i in range(test_x_set.shape[0]):
+        baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
+    for i in range(train_x_set.shape[0]):
+        baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
+
+    train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+    test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+    FFT = 1
+    if FFT:
+        train_x_set, freq = fft(train_x_set, coordinates_train)
+        test_x_set, freq = fft(test_x_set, coordinates_test)
+        half = int(train_x_set.shape[1]/2)
+        train_x_set = np.abs(train_x_set[:, :half])
+        test_x_set = np.abs(test_x_set[:, :half])
+        freq = freq[:, :half]
+        # TODO color list problem here
+        # plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
+        train_x_set = np.multiply(train_x_set, 1e7)
+        test_x_set = np.multiply(test_x_set, 1e7) 
+        plot_dataset(test_x_set[:300], test_y_set[:300], freq, dataset_dir+'/plot', 'test_x_set_fft.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
+    else:
+        train_x_set = np.multiply(train_x_set, 1e8)
+        test_x_set = np.multiply(test_x_set, 1e8)
+        plot_dataset(test_x_set[:300], test_y_set[:300], coordinates_test[:300], dataset_dir+'/plot', 'test_x_set.png', trans=1)
     # Remove base line
     # for i in range(test_x_set.shape[0]):
     #     baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
