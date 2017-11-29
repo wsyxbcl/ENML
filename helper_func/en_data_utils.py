@@ -20,7 +20,7 @@ def get_save_path(save_dir, filename):
     path = save_dir+'/'+filename
     return path
 
-def get_dataset(files_dir, x_range):
+def get_dataset(files_dir, x_range, num_classes):
     """
     Get data from csv file, do the augmentation, seperate the training set and 
     the test set, then save to npy file for further uses.
@@ -44,7 +44,7 @@ def get_dataset(files_dir, x_range):
         X.append(x) # m*n list
         coordinates.append(coordinate)
         # print(subdir+'/'+filename)
-    Y_one_hot = to_categorical(Y, num_classes=10)
+    Y_one_hot = to_categorical(Y, num_classes=num_classes)
     X_np = np.array(X) # m*n numpy array
     Y_np = np.array(Y_one_hot) # m*c numpy array
     coordinates_np = np.array(coordinates)
@@ -125,7 +125,7 @@ def fft(X, coordinates):
     freq[:] = np.fft.fftfreq(n, d=timestep)
     return X_fft, freq
 
-def get_slice_concat(raw_data_dir, num_slices, len_slice):
+def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes):
     """
     get data according to slice ranges, and concat to form dataset.
     """
@@ -135,9 +135,9 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice):
         ranges.append(list(range(-(i + 1) * len_slice, -i * len_slice)))
     for i, r in enumerate(ranges):
         if i == 0:
-            X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, r)
+            X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, r, num_classes)
         else:
-            X, Y, coordinates = get_dataset(raw_data_dir, r)
+            X, Y, coordinates = get_dataset(raw_data_dir, r, num_classes)
             X_np = np.concatenate((X, X_np))
             Y_np = np.concatenate((Y, Y_np))
             coordinates_np = np.concatenate((coordinates, coordinates_np))
@@ -147,12 +147,13 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice):
 if __name__ == '__main__':
     dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class10_len512'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
-    # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/baseline'
+    # dataset_dir = 'T:/college/last/finaldesign/ENML/model/20171117_class10_len512'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
     raw_data_dir = dataset_dir+'/raw'
     num_slices = 8
+    num_classes = 10
     len_slice = 512
-    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice)
+    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes)
 
     # # FFT test module
     # X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, range(4000, 8000))
@@ -207,7 +208,8 @@ if __name__ == '__main__':
     print(test_y_set.shape)
 
     # Visualization
-    plot_dataset(test_x_set[:300], test_y_set[:300], coordinates_test[:300], dataset_dir+'/plot', 'test_orig.png', trans=1)
+    num_pick = 10 * num_classes * num_slices
+    plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=1)
 
     for i in range(test_x_set.shape[0]):
         baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
@@ -216,7 +218,7 @@ if __name__ == '__main__':
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-    FFT = 1
+    FFT = 0
     if FFT:
         train_x_set, freq = fft(train_x_set, coordinates_train)
         test_x_set, freq = fft(test_x_set, coordinates_test)
@@ -232,7 +234,7 @@ if __name__ == '__main__':
     else:
         train_x_set = np.multiply(train_x_set, 1e8)
         test_x_set = np.multiply(test_x_set, 1e8)
-        plot_dataset(test_x_set[:300], test_y_set[:300], coordinates_test[:300], dataset_dir+'/plot', 'test_x_set.png', trans=1)
+        plot_dataset(test_x_set[:300], test_y_set[:300], coordinates_test[:300], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
     # Remove base line
     # for i in range(test_x_set.shape[0]):
     #     baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
