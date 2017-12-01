@@ -24,6 +24,7 @@ def get_dataset(files_dir, x_range, num_classes):
     """
     Get data from csv file, do the augmentation, seperate the training set and 
     the test set, then save to npy file for further uses.
+    y here only stands for class, so there must be consequenced class in filename.
     """
     Y = []
     X = []
@@ -31,10 +32,10 @@ def get_dataset(files_dir, x_range, num_classes):
     # import csv data
     for filename, subdir in walker(files_dir, re.compile('training(.*?)_\d+.csv')):
         # print(subdir+'/'+filename)
-        y = re.findall('training(\d+)_.*?.csv', filename)[-1]
+        y = re.findall('training(\d+)_.*?.csv', filename)[-1] # starts from 0 maybe
         # y_one_hot = np.eye(9, dtype=int)[int(y) - 1]
-        Y.append(int(y)) # where y is 0-9
-        # Y.append(int(y) - 1) #where y is 1-9
+        # Y.append(int(y)) # where y is 0~(num_classes-1)
+        Y.append(int(y) - 1) #where y is 1~num_classes
         with open(subdir+'/'+filename, 'r') as f:
             reader = csv.reader(f)
             data_list = list(reader)[1:] # Skip the first line
@@ -85,7 +86,7 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
     """
     plt.style.use('ggplot')
     # plt.style.use('Solarize_Light2')
-    # colors = plt.rcParams['axes.prop_cycle']
+    colors = plt.rcParams['axes.prop_cycle']
     # Try Tableau data color here
     tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),    
                  (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),    
@@ -103,11 +104,11 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
     for i in range(np.shape(X)[0]):
         y = np.argwhere(Y[i, :] == 1)[0][0]
         if y in labels:
-            # ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
-            ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label='')
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
+            # ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label='')
         else:
-            # ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label=str(y))
-            ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label=str(y))
+            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label=str(y))
+            # ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label=str(y))
             labels.append(y)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -182,13 +183,13 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes):
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class10_len512'
+    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/FFTfreq'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
-    dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
+    # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
     raw_data_dir = dataset_dir+'/raw'
     num_slices = 2
-    num_classes = 8
+    num_classes = 7
     len_slice = 512
     X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes)
     save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
