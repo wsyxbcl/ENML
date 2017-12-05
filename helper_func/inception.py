@@ -5,6 +5,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers.merge import concatenate
 from keras import regularizers
 from keras import initializers
+from keras import optimizers
 from keras.models import Model
 from keras.utils import plot_model
 from en_data_utils import *
@@ -173,7 +174,7 @@ def simple_inception(input_shape, num_classes):
     model = Model(inputs, net, name='simple_CNN')
     return model    
 
-def simple_CNN(input_shape, num_classes):
+def simple_CNN(input_shape, num_classes, dropout_keep_prob):
     inputs = Input(input_shape)
     net = conv1d_bn(inputs, 64, 3, strides=1, padding='same')
     net = MaxPooling1D(2, strides=2, padding='valid')(net)
@@ -183,6 +184,7 @@ def simple_CNN(input_shape, num_classes):
     net = MaxPooling1D(2, strides=2, padding='valid')(net)
     # net = conv1d_bn(net, 512, 3, padding='same')
     # net = MaxPooling1D(2, strides=2, padding='valid')(net)
+    net = Dropout(1 - dropout_keep_prob)(net)
     net = Flatten()(net)
     net = Dense(units=num_classes, activation='softmax')(net)
     
@@ -229,14 +231,16 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     plt.close(fig)
 
 if __name__ == '__main__':
-    model_name = 'simple_cnn_baseline1_fft1_batch512'
-    root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class5_len256'
+    model_name = 'simple_cnn_baseline1_fft0_batch256_testdropout'
+    root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len512'
     test_ratio = 0.25
     validation_ratio = 0.25 # splited from traning set
-    training_epoch = 128
-    batch_size = 512
+    training_epoch = 32
+    batch_size = 256
+    lr = 0.001
+    dropout_keep_prob = 0.8
     save_dir = root_dir+'/'+model_name
-    FFT = 1
+    FFT = 0
 
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
     
@@ -270,9 +274,10 @@ if __name__ == '__main__':
 
 
     # model = inception_test(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
-    model = simple_CNN(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
+    model = simple_CNN(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1], dropout_keep_prob=dropout_keep_prob)
     # model = simple_inception(input_shape=(train_x_set.shape[1], 1), num_classes=train_y_set.shape[1])
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    adam = optimizers.adam(lr=lr)
+    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
 
     model.fit(train_x_set, train_y_set, validation_split=validation_ratio, epochs=training_epoch, batch_size=batch_size)
     
