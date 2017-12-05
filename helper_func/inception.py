@@ -231,8 +231,10 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     plt.close(fig)
 
 if __name__ == '__main__':
-    model_name = 'simple_cnn_baseline1_fft0_batch256_testdropout'
-    root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len512'
+    model_name = 'GPU_1060_simple_cnn_baseline1_fft0_batch256_keepprob_80_lr_001'
+    # model_name = 'CPU_simple_cnn_baseline1_fft0_batch256_testdropout'
+    root_dir = '/home/cyx/ENML/model/20171201_class5_len128'
+    # root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len512'
     test_ratio = 0.25
     validation_ratio = 0.25 # splited from traning set
     training_epoch = 32
@@ -309,5 +311,5 @@ if __name__ == '__main__':
     model.save(get_save_path(save_dir+'/'+'training_result', 'model.h5'))
 
     # model.summary()
-    plot_model(model, to_file=get_save_path(save_dir+'/'+'training_result', 'model.png'), show_shapes=True)
+    # plot_model(model, to_file=get_save_path(save_dir+'/'+'training_result', 'model.png'), show_shapes=True)
     # VG(model_to_dot(model).create(prog='dot', format='svg'))
