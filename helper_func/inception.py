@@ -208,7 +208,10 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
         print('Class\t#Samples\tTest Accuracy', file=f)
         for i in range(classes):
             num_sample = y_truth[np.argwhere(y_truth==i)].shape[0]
-            acc = y_correct[np.argwhere(y_correct==i)].shape[0] / num_sample
+            if num_sample == 0:
+                acc = 0 # Solving zero divide
+            else:
+                acc = y_correct[np.argwhere(y_correct==i)].shape[0] / num_sample
             print('%d\t%d\t%f'%(i+1, num_sample, acc), file=f)
     # prepare the np array for visualization
     test_array = np.array([y_truth, y_estimate]).T
@@ -231,16 +234,16 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     plt.close(fig)
 
 if __name__ == '__main__':
-    model_name = 'GPU_1060_simple_cnn_baseline1_fft0_batch256_keepprob_80_lr_001'
+    model_name = 'GPU_1060_simple_cnn_baseline1_fft0_batch256_keepprob_50_lr_001'
     # model_name = 'CPU_simple_cnn_baseline1_fft0_batch256_testdropout'
-    root_dir = '/home/cyx/ENML/model/20171201_class5_len128'
+    root_dir = '/home/cyx/ENML/model/idea_insane/20171201_class5without0_len128'
     # root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len512'
-    test_ratio = 0.25
+    test_ratio = 0.01
     validation_ratio = 0.25 # splited from traning set
-    training_epoch = 32
+    training_epoch = 512
     batch_size = 256
     lr = 0.001
-    dropout_keep_prob = 0.8
+    dropout_keep_prob = 0.5
     save_dir = root_dir+'/'+model_name
     FFT = 0
 
