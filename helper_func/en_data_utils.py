@@ -20,7 +20,7 @@ def get_save_path(save_dir, filename):
     path = save_dir+'/'+filename
     return path
 
-def get_dataset(files_dir, x_range, num_classes):
+def get_dataset(files_dir, x_range, num_classes, y_starts_from):
     """
     Get data from csv file, do the augmentation, seperate the training set and 
     the test set, then save to npy file for further uses.
@@ -34,8 +34,10 @@ def get_dataset(files_dir, x_range, num_classes):
         # print(subdir+'/'+filename)
         y = re.findall('training(\d+)_.*?.csv', filename)[-1] # starts from 0 maybe
         # y_one_hot = np.eye(9, dtype=int)[int(y) - 1]
-        # Y.append(int(y)) # where y is 0~(num_classes-1)
-        Y.append(int(y) - 1) #where y is 1~num_classes
+        if y_starts_from == 0:
+            Y.append(int(y)) # where y is 0~(num_classes-1)
+        else:
+            Y.append(int(y) - 1) #where y is 1~num_classes
         with open(subdir+'/'+filename, 'r') as f:
             reader = csv.reader(f)
             data_list = list(reader)[1:] # Skip the first line
@@ -163,7 +165,7 @@ def fft_avg(test_x_set, test_y_set, num_classes):
             test_y_avg[i, :] = test_y_set_sorted[turning_points[i - 1], :]
     return test_x_avg, test_y_avg
 
-def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes):
+def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from):
     """
     get data according to slice ranges, and concat to form dataset.
     """
@@ -173,9 +175,9 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes):
         ranges.append(list(range(-(i + 1) * len_slice, -i * len_slice)))
     for i, r in enumerate(ranges):
         if i == 0:
-            X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, r, num_classes)
+            X_np, Y_np, coordinates_np = get_dataset(raw_data_dir, r, num_classes, y_starts_from)
         else:
-            X, Y, coordinates = get_dataset(raw_data_dir, r, num_classes)
+            X, Y, coordinates = get_dataset(raw_data_dir, r, num_classes, y_starts_from)
             X_np = np.concatenate((X, X_np))
             Y_np = np.concatenate((Y, Y_np))
             coordinates_np = np.concatenate((coordinates, coordinates_np))
@@ -188,13 +190,14 @@ if __name__ == '__main__':
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
     raw_data_dir = dataset_dir+'/raw'
+    y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
     num_slices = 43
     num_classes = 5
     len_slice = 128
     vis = 1
     FFT = 1
 
-    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes)
+    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from)
     save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
     # train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(dataset_dir+'/dataset')
@@ -209,7 +212,7 @@ if __name__ == '__main__':
 
     # Visualization
     if vis:
-        num_pick = 500
+        # num_pick = 500
         num_pick = 10 * num_classes * num_slices
         plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=1)
 
