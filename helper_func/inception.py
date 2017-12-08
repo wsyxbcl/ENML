@@ -7,6 +7,7 @@ from keras import regularizers
 from keras import initializers
 from keras import optimizers
 from keras.models import Model
+from keras.models import load_model
 from keras.utils import plot_model
 from en_data_utils import *
 
@@ -246,6 +247,7 @@ if __name__ == '__main__':
     dropout_keep_prob = 0.5
     save_dir = root_dir+'/'+model_name
     FFT = 0
+    FFT_norm = 1 # Whether_to_normalize_input_after_fft
 
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
     
@@ -266,8 +268,12 @@ if __name__ == '__main__':
         test_x_set = np.abs(test_x_set[:, :half])
         freq = freq[:, :half]
         # plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
-        train_x_set = np.multiply(train_x_set, 1e7)
-        test_x_set = np.multiply(test_x_set, 1e7)    
+        if FFT_norm:
+            train_x_set = preprocessing.scale(train_x_set)
+            test_x_set = preprocessing.scale(test_x_set)
+        else:
+            train_x_set = np.multiply(train_x_set, 1e7)
+            test_x_set = np.multiply(test_x_set, 1e7)
     else:
         train_x_set = np.multiply(train_x_set, 1e8)
         test_x_set = np.multiply(test_x_set, 1e8)

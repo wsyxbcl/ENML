@@ -5,6 +5,7 @@ import os
 from dir_walker import walker
 from keras.utils.np_utils import to_categorical
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -185,17 +186,18 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171117_class5_len128'
+    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171208_demo/20171201_class5_len1024'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 43
+    num_slices = 5
     num_classes = 5
-    len_slice = 128
+    len_slice = 1024
     vis = 1
     FFT = 1
+    FFT_norm = 1
 
     X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from)
     save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
@@ -230,12 +232,16 @@ if __name__ == '__main__':
             train_x_set = np.abs(train_x_set[:, :half])
             test_x_set = np.abs(test_x_set[:, :half])
             freq = freq[:, :half]
-            train_x_set = np.multiply(train_x_set, 1e7)
-            test_x_set = np.multiply(test_x_set, 1e7) 
-            plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], freq, dataset_dir+'/plot', 'test_fft.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
-            test_x_set_fft_avg, test_y_set_fft_avg = fft_avg(test_x_set[:num_pick], test_y_set[:num_pick], num_classes)
-            plot_dataset(test_x_set_fft_avg, test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg.png', xlabel='Freq/Hz', ylabel='A', trans=1)
-            plot_dataset(test_x_set_fft_avg - test_x_set_fft_avg[0, :], test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_contrast.png', xlabel='Freq/Hz', ylabel='A', trans=1)
+            if FFT_norm:
+                train_x_set = preprocessing.scale(train_x_set)
+                test_x_set = preprocessing.scale(test_x_set)
+            else:
+                train_x_set = np.multiply(train_x_set, 1e7)
+                test_x_set = np.multiply(test_x_set, 1e7) 
+            plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], freq, dataset_dir+'/plot', 'test_fft_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
+            test_x_set_fft_avg, test_y_set_fft_avg = fft_avg(test_x_set[:], test_y_set[:], num_classes)
+            plot_dataset(test_x_set_fft_avg, test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
+            plot_dataset(test_x_set_fft_avg - test_x_set_fft_avg[0, :], test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_contrast_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
 
         else:
             train_x_set = np.multiply(train_x_set, 1e8)
