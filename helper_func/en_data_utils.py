@@ -42,7 +42,6 @@ def get_dataset(files_dir, x_range, num_classes, y_starts_from):
         with open(subdir+'/'+filename, 'r') as f:
             reader = csv.reader(f)
             data_list = list(reader)[1:] # Skip the first line
-
         x = [float(data_list[i][1]) for i in x_range] # len(x_range)*1 list here
         coordinate = [float(data_list[i][0]) for i in x_range]
         X.append(x) # m*n list
@@ -186,22 +185,27 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171208_demo/20171201_class5_len1024'
+    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171228_energylab/20171228_class5_len128'
+    # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/code/test/20171115_test'
+
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 5
+    num_slices = 40
     num_classes = 5
-    len_slice = 1024
+    len_slice = 128
     vis = 1
-    FFT = 1
-    FFT_norm = 1
+    neg = 1
+    FFT = 0
+    FFT_norm = 0
 
     X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from)
+    if neg:
+        X_np = -X_np
     save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
-    # train_x_set, train_y_set, test_x_set, test_y_set, coordinates = load_dataset(dataset_dir+'/dataset')
+
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(dataset_dir+'/dataset')
     print("Shape of train_x_set:")
     print(train_x_set.shape)
@@ -225,6 +229,8 @@ if __name__ == '__main__':
 
         train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
         test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+        plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_norm.png', trans=1)
+
         if FFT:
             train_x_set, freq = fft(train_x_set, coordinates_train)
             test_x_set, freq = fft(test_x_set, coordinates_test)
