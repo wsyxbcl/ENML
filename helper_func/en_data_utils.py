@@ -82,7 +82,7 @@ def remove_baseline(x, degree=3):
     x_removed = x - baseline_values
     return baseline_values, x_removed
 
-def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel='Current/A', trans=0.5):
+def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel='Current/A', trans=0.5,  X_2d=False):
     """
     Get m*n dimensional X, plot them to given coordinates
     """
@@ -103,18 +103,27 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     labels = []
-    for i in range(np.shape(X)[0]):
-        y = np.argwhere(Y[i, :] == 1)[0][0]
-        if y in labels:
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
-            # ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label='')
-        else:
-            ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label=str(y))
-            # ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label=str(y))
-            labels.append(y)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.legend(loc='best')
+    if X_2d:
+        for i in range(np.shape(X)[0]):
+            y = np.argwhere(Y[i, :] == 1)[0][0]
+            if y in labels:
+                ax.plot(i, X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label='')
+            else:
+                ax.plot(i, X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label=str(y))
+                labels.append(y)
+    else:       
+        for i in range(np.shape(X)[0]):
+            y = np.argwhere(Y[i, :] == 1)[0][0]
+            if y in labels:
+                ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label='')
+                # ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label='')
+            else:
+                ax.plot(coordinates[i, :], X[i, :], color=colors.by_key()['color'][y], alpha=trans, label=str(y))
+                # ax.plot(coordinates[i, :], X[i, :], color=tableau20[y], alpha=trans, label=str(y))
+                labels.append(y)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend(loc='best')
     plt.savefig(get_save_path(save_dir, filename), dpi=300)
     plt.clf()
     plt.close(fig)
@@ -185,7 +194,7 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171228_energylab/20171228_class5_len128'
+    dataset_dir = 'C:/code/ENML/model/20171228_energylab/20171228_class5_len128_voltage'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
@@ -193,18 +202,21 @@ if __name__ == '__main__':
 
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 40
+    num_slices = 5
     num_classes = 5
-    len_slice = 128
-    vis = 1
+    len_slice = 512
+    get_data = 0 # decide get and load or just load
+    vis = 0
+    vis_std = 1 # visualize standard deviation
     neg = 1
     FFT = 0
     FFT_norm = 0
 
-    X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from)
-    if neg:
-        X_np = -X_np
-    save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
+    if get_data:
+        X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from)
+        if neg:
+            X_np = -X_np
+        save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
 
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(dataset_dir+'/dataset')
     print("Shape of train_x_set:")
@@ -220,12 +232,12 @@ if __name__ == '__main__':
     if vis:
         # num_pick = 500
         num_pick = 10 * num_classes * num_slices
-        plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=1)
+        plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=0.6)
 
-        for i in range(test_x_set.shape[0]):
-            baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
-        for i in range(train_x_set.shape[0]):
-            baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
+        # for i in range(test_x_set.shape[0]):
+        #     baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
+        # for i in range(train_x_set.shape[0]):
+        #     baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
 
         train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
         test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
@@ -253,25 +265,12 @@ if __name__ == '__main__':
             train_x_set = np.multiply(train_x_set, 1e8)
             test_x_set = np.multiply(test_x_set, 1e8)
             plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:300], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
-    # Remove base line
-    # for i in range(test_x_set.shape[0]):
-    #     baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
-    # for i in range(train_x_set.shape[0]):
-    #     baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
-    # train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-    # test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-    
-    # plot_dataset(test_x_set, test_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_test.png')
-    # plot_dataset(train_x_set, train_y_set, coordinates, dataset_dir+'/plot', 'baseline_removed_train.png')
-    
 
-    # Test baseline function here
-    # baseline_values, x_removed = remove_baseline(test_x_set[0], degree=3)
-    # x_removed = x_removed - np.mean(x_removed)
-    # fig = plt.figure()
-    # ax = fig.add_subplot(1,1,1)
-    # ax.plot(coordinates, baseline_values, label='baseline')
-    # ax.plot(coordinates, test_x_set[0], label='raw data')
-    # ax.plot(coordinates, x_removed, label='baseline removed')
-    # ax.legend(loc='best')
-    # plt.savefig(get_save_path(dataset_dir+'/baseline', 'baseline.png'), dpi=300)
+    if vis_std:
+        train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+        test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+        # train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+        # test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+        train_x_set_std = np.std(train_x_set, axis=1)
+        plot_dataset(train_x_set_std[:500], train_y_set[:500], coordinates_train[:500], dataset_dir+'/plot', 'train_x_std.png', xlabel='samples', ylabel='standard deviation', trans=1,  X_2d=True)
+        # I'm such a fucking idiot...The cancel of deviation should be performed on each sample instead on the entire dataset! For the time sequence is totally random.
