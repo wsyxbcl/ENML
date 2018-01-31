@@ -124,7 +124,7 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.legend(loc='best')
-    plt.savefig(get_save_path(save_dir, filename), dpi=300)
+    plt.savefig(get_save_path(save_dir, filename), dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close(fig)
 
@@ -194,7 +194,7 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = 'C:/code/ENML/model/20171228_energylab/20171228_class5_len128_voltage'
+    dataset_dir = 'C:/code/ENML/model/20171228_energylab/20171228_class5_len128_voltage_small'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
     num_slices = 5
     num_classes = 5
-    len_slice = 512
+    len_slice = 128
     get_data = 0 # decide get and load or just load
     vis = 0
     vis_std = 1 # visualize standard deviation
