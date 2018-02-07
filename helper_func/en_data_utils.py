@@ -23,8 +23,7 @@ def get_save_path(save_dir, filename):
 
 def get_dataset(files_dir, x_range, num_classes, y_starts_from):
     """
-    Get data from csv file, do the augmentation, seperate the training set and 
-    the test set, then save to npy file for further uses.
+    Get data from csv file, do the augmentation, then save to npy file for further uses.
     y here only stands for class, so there must be consequenced class in filename.
     """
     Y = []
@@ -107,9 +106,9 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
         for i in range(np.shape(X)[0]):
             y = np.argwhere(Y[i, :] == 1)[0][0]
             if y in labels:
-                ax.plot(i, X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label='')
+                ax.plot(coordinates[i], X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label='')
             else:
-                ax.plot(i, X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label=str(y))
+                ax.plot(coordinates[i], X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label=str(y))
                 labels.append(y)
     else:       
         for i in range(np.shape(X)[0]):
@@ -194,7 +193,7 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = 'C:/code/ENML/model/20171228_energylab/20171228_class5_len128_voltage_small'
+    dataset_dir = 'C:/code/ENML/model/20180202/20180202_class5_len128_e'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
@@ -202,12 +201,12 @@ if __name__ == '__main__':
 
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 5
+    num_slices = 15
     num_classes = 5
     len_slice = 128
     get_data = 0 # decide get and load or just load
-    vis = 0
-    vis_std = 1 # visualize standard deviation
+    vis = 1
+    vis_std = 0 # visualize standard deviation
     neg = 1
     FFT = 0
     FFT_norm = 0
@@ -230,8 +229,8 @@ if __name__ == '__main__':
 
     # Visualization
     if vis:
-        # num_pick = 500
-        num_pick = 10 * num_classes * num_slices
+        num_pick = 500
+        # num_pick = 10 * num_classes * num_slices
         plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=0.6)
 
         # for i in range(test_x_set.shape[0]):
@@ -264,7 +263,7 @@ if __name__ == '__main__':
         else:
             train_x_set = np.multiply(train_x_set, 1e8)
             test_x_set = np.multiply(test_x_set, 1e8)
-            plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:300], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
+            plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
 
     if vis_std:
         train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
