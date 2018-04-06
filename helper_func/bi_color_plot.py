@@ -8,7 +8,7 @@ import random
 
 plt.style.use('ggplot')
 
-rootdir = 'C:/code/ENML/data/20171228/class3'
+rootdir = 'C:/code/ENML/test/i_v'
 
 subdir1 = list(walker(rootdir, re.compile('(.*?).csv')))[0][1]
 label1 = subdir1[(len(rootdir) - len(subdir1)):]
@@ -21,8 +21,8 @@ i, j = (1, 1)
 num_file = 0
 
 for filename, subdir in walker(subdir1, re.compile('(.*?).csv')):
-    if random.random() < 0.8:
-        continue
+    # if random.random() < 0.8:
+    #     continue
     print(subdir+'/'+filename)
     num_file = num_file + 1
     print('#file: %d'%num_file)

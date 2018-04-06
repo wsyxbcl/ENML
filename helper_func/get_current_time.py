@@ -31,10 +31,11 @@ def get_i_t_ivium(source_file, output_file):
                     f.write('\n')
         print('Converted finished. Saved to '+output_file)
 
-def get_i_t_energylab(dir, filename, loop_period, num_loop):
+def get_i_v_t_energylab(dir, filename, loop_period, num_loop):
     """
     Seperate each loop from Energylab output files, each file contains all loops.
-    Extract current and time from each loop and rewrite to a csv file.
+    Extract current, potential and time from each loop and rewrite to a csv file.
+    Notice that loop_period is counted by s.
     """
     source_file = dir+'/'+filename
     with open(source_file, 'rt') as f:
@@ -44,7 +45,7 @@ def get_i_t_energylab(dir, filename, loop_period, num_loop):
         current_list = list(map(float, [row[2] for row in data_list[4:]]))
         voltage_list = list(map(float, [row[1] for row in data_list[4:]]))
     time0 = time_list[0]
-    coordinate = list(range(8000))
+    coordinate = list(range(loop_period * 1000)) # ms
     for loop in range(num_loop):
         time_write = []
         current_write = []
@@ -74,18 +75,21 @@ def get_i_t_energylab(dir, filename, loop_period, num_loop):
 
 if __name__ == '__main__':
     # rootdir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171108_p_curve'
-    rootdir = 'T:/college/last/finaldesign/ENML/data/CA_ascii/20171228/energylab'
+    # rootdir = 'T:/college/last/finaldesign/ENML/data/CA_ascii/20171228/energylab'
+    rootdir = 'C:/code/ENML/data/20180202/raw'
     ivium = 0
     count = 0
     # for filename, subdir in walker(rootdir, re.compile('training(.*?)(\d+)$')):
-    # Things for re: first time this works, but the second time, generated files included,
-    # and it fails.
+
+    # Notice: Because of the re: first time this works, but the second time, 
+    #         generated files included, and it fails. Personally it's not a big deal, 
+    #         so there's no plan to fix this yet.
     for filename, subdir in walker(rootdir):
         print('Opening '+filename)
         if ivium:
             get_i_t_ivium(subdir+'/'+filename, subdir+'/'+filename+'.csv')
         else:
-            get_i_t_energylab(subdir, filename, loop_period=8, num_loop=30)
+            get_i_v_t_energylab(subdir, filename, loop_period=10, num_loop=30)
         count += 1
 
     print('#Files :%d'%count)
