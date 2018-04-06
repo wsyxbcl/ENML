@@ -2,6 +2,7 @@
 data/*
 test/*
 keras_env/*
+model/*
 .idea/*
 *.png
 *.txt
