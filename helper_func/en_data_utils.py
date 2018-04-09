@@ -5,7 +5,7 @@ import os
 from dir_walker import walker
 from keras.utils.np_utils import to_categorical
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
+from sklearn import preprocessing # Notice that We use this wrongly all over here!!!
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -41,7 +41,10 @@ def get_dataset(files_dir, x_range, num_classes, y_starts_from):
         with open(subdir+'/'+filename, 'r') as f:
             reader = csv.reader(f)
             data_list = list(reader)[1:] # Skip the first line
-        x = [float(data_list[i][1]) for i in x_range] # len(x_range)*1 list here
+        try:
+            x = [float(data_list[i][1]) for i in x_range] # len(x_range)*1 list here
+        except IndexError:
+            print("IndexError, please check "+subdir+'/'+filename)
         coordinate = [float(data_list[i][0]) for i in x_range]
         X.append(x) # m*n list
         coordinates.append(coordinate)
@@ -106,9 +109,9 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
         for i in range(np.shape(X)[0]):
             y = np.argwhere(Y[i, :] == 1)[0][0]
             if y in labels:
-                ax.plot(coordinates[i], X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label='')
+                ax.plot(i, X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label='')
             else:
-                ax.plot(coordinates[i], X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label=str(y))
+                ax.plot(i, X[i], color=colors.by_key()['color'][y], marker='o', alpha=trans, label=str(y))
                 labels.append(y)
     else:       
         for i in range(np.shape(X)[0]):
@@ -193,7 +196,8 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = 'C:/code/ENML/model/20171228_energylab/20171228_class5_len128'
+    dataset_dir = 'C:/code/ENML/model/20180407_r_class5_len128'
+    # dataset_dir = 'C:/code/ENML/model/20171117_class5_len128'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
@@ -201,13 +205,14 @@ if __name__ == '__main__':
 
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 15
+    num_slices = 62
     num_classes = 5
     len_slice = 128
     get_data = 0 # decide get and load or just load
-    vis = 0
-    vis_std = 1 # visualize standard deviation
-    neg = 1
+    norm =  0
+    vis = 1
+    vis_std = 1 # visualize standard deviation, FFT * vis_std = 0!!!
+    neg = 0
     FFT = 0
     FFT_norm = 0
 
@@ -218,6 +223,12 @@ if __name__ == '__main__':
         save_dataset(X_np, Y_np, coordinates_np, dataset_dir+'/'+'dataset')
 
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(dataset_dir+'/dataset')
+
+    # Do not know WTF is wrong with the IviumStat software here
+    coordinates_train = coordinates_train * 5
+    coordinates_test = coordinates_test * 5
+
+
     print("Shape of train_x_set:")
     print(train_x_set.shape)
     print("Shape of test_x_set:")
@@ -240,7 +251,6 @@ if __name__ == '__main__':
 
         train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
         test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-        plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_norm.png', trans=1)
 
         if FFT:
             train_x_set, freq = fft(train_x_set, coordinates_train)
@@ -261,13 +271,19 @@ if __name__ == '__main__':
             plot_dataset(test_x_set_fft_avg - test_x_set_fft_avg[0, :], test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_contrast_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
 
         else:
-            train_x_set = np.multiply(train_x_set, 1e8)
-            test_x_set = np.multiply(test_x_set, 1e8)
+            if norm:
+                # train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+                # test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+                # train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+                # test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+            else:
+                train_x_set = np.multiply(train_x_set, 1e8)
+                test_x_set = np.multiply(test_x_set, 1e8)
             plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
 
     if vis_std:
-        train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-        test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+        # train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+        # test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
         # train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
         # test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
         train_x_set_std = np.std(train_x_set, axis=1)

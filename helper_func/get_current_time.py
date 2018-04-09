@@ -76,8 +76,8 @@ def get_i_v_t_energylab(dir, filename, loop_period, num_loop):
 if __name__ == '__main__':
     # rootdir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171108_p_curve'
     # rootdir = 'T:/college/last/finaldesign/ENML/data/CA_ascii/20171228/energylab'
-    rootdir = 'C:/code/ENML/data/20180202/raw'
-    ivium = 0
+    rootdir = 'C:/code/ENML/data/20180407_r/raw'
+    ivium = 1
     count = 0
     # for filename, subdir in walker(rootdir, re.compile('training(.*?)(\d+)$')):
 

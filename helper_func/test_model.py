@@ -1,7 +1,8 @@
 from inception import *
 model_name = 'GPU_1060_simple_cnn4_baseline1_fft0_batch512_keepprob2_50_lr_001_on_20171201_class5_len128'
-model_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len128/GPU_1060_simple_cnn4_baseline1_fft0_batch512_keepprob2_50_lr_001/training_result'
-dataset_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_blank_class5_len128/dataset'
+# model_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len128/GPU_1060_simple_cnn4_baseline1_fft0_batch512_keepprob2_50_lr_001/training_result'
+model_dir = "C:/code/ENML/model/20171117_class5_len128/GPU_1060_simple_CNN_baseline1_fft0_norm0_batch256_keepprob_50_lr_001/training_result"
+dataset_dir = 'C:/code/ENML/model/20180407_r_class5_len128/dataset'
 
 model_EN = load_model(model_dir + '/model.h5')
 test_ratio = 0.25
