@@ -332,6 +332,6 @@ if __name__ == '__main__':
         print('learning rate = {}'.format(lr), file=f)
         print("dropout_keep_prob = {}".format(dropout_keep_prob), file=f)
         print('Size of Training_set = {}'.format(train_x_set.shape), file=f)
-        print(model.summary(), file=f)
+    # print(model.summary(), file=f)
     # plot_model(model, to_file=get_save_path(save_dir+'/'+'training_result', 'model.png'), show_shapes=True)
     # VG(model_to_dot(model).create(prog='dot', format='svg'))
