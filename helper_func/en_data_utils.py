@@ -209,7 +209,7 @@ if __name__ == '__main__':
     num_classes = 5
     len_slice = 128
     get_data = 0 # decide get and load or just load
-    norm =  0
+    norm =  1
     vis = 1
     vis_std = 1 # visualize standard deviation, FFT * vis_std = 0!!!
     neg = 0
@@ -272,10 +272,10 @@ if __name__ == '__main__':
 
         else:
             if norm:
-                # train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-                # test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-                # train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-                # test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+                train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+                test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+                train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+                test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
             else:
                 train_x_set = np.multiply(train_x_set, 1e8)
                 test_x_set = np.multiply(test_x_set, 1e8)

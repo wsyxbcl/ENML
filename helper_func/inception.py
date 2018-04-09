@@ -260,6 +260,8 @@ if __name__ == '__main__':
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+    train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+    test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     if FFT:
         train_x_set, freq = fft(train_x_set, coordinates_train)
         test_x_set, freq = fft(test_x_set, coordinates_test)
@@ -274,9 +276,6 @@ if __name__ == '__main__':
         else:
             train_x_set = np.multiply(train_x_set, 1e7)
             test_x_set = np.multiply(test_x_set, 1e7)
-    else:
-        train_x_set = np.multiply(train_x_set, 1e8)
-        test_x_set = np.multiply(test_x_set, 1e8)
 
     # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
     # which seems to be (m, n, 1) in this case.
