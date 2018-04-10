@@ -235,27 +235,27 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     plt.close(fig)
 
 if __name__ == '__main__':
-    model_name = 'GPU_1060_simple_cnn_baseline1_fft0_batch256_keepprob_50_lr_001_size10'
+    model_name = 'GPU_k80_simple_cnn_baseline1_fft0_batch256_keepprob_50_lr_001_size100'
     # model_name = 'CPU_simple_cnn_baseline1_fft0_batch256_testdropout'
-    root_dir = 'C:/code/ENML/model/20180407_r_class5_len128'
+    root_dir = '/home/ubuntu/ENML/model/20180407_r_class5_len128'
     # root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len512'
     test_ratio = 0.01
     validation_ratio = 0.25 # splited from traning set
-    training_epoch = 512
+    training_epoch = 256
     batch_size = 256
     lr = 0.001
     dropout_keep_prob = 0.5
     save_dir = root_dir+'/'+model_name
     FFT = 0
     FFT_norm = 1 # Whether_to_normalize_input_after_fft
-
-    m = 10 # Expected training set size, 0 means all here
-    num_train_val = m / (1 - validation_ratio)
+    m = 100 # Expected training set size, 0 means all here
 
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
-    train_x_set = train_x_set[:num_train_val, :]
-    train_y_set = train_y_set[:num_train_val, :]
-    coordinates_train = coordinates_train[:num_train_val, :]
+    if m:
+        num_train_val = int(m / (1 - validation_ratio))
+        train_x_set = train_x_set[:num_train_val, :]
+        train_y_set = train_y_set[:num_train_val, :]
+        coordinates_train = coordinates_train[:num_train_val, :]
     # Baseline removal
     # TODO Maybe vectorilize this.
     for i in range(test_x_set.shape[0]):
@@ -324,7 +324,7 @@ if __name__ == '__main__':
     model.save(get_save_path(save_dir+'/'+'training_result', 'model.h5'))
 
     # Log
-    with open('LOG.txt', 'rt') as f:
+    with open(save_dir+'/'+'training_result/'+'LOG.txt', 'wt') as f:
         print('test ratio = {}'.format(test_ratio), file=f)
         print('validation ratio = {}'.format(validation_ratio), file=f)
         print('training epoch = {}'.format(training_epoch), file=f)
@@ -332,6 +332,6 @@ if __name__ == '__main__':
         print('learning rate = {}'.format(lr), file=f)
         print("dropout_keep_prob = {}".format(dropout_keep_prob), file=f)
         print('Size of Training_set = {}'.format(train_x_set.shape), file=f)
-    # model.summary()
+    # print(model.summary(), file=f)
     # plot_model(model, to_file=get_save_path(save_dir+'/'+'training_result', 'model.png'), show_shapes=True)
     # VG(model_to_dot(model).create(prog='dot', format='svg'))
