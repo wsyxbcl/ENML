@@ -32,23 +32,23 @@ def get_dataset(files_dir, x_range, num_classes, y_starts_from):
     # import csv data
     for filename, subdir in walker(files_dir, re.compile('training(.*?)_\d+.csv')):
         # print(subdir+'/'+filename)
+        with open(subdir+'/'+filename, 'r') as f:
+            reader = csv.reader(f)
+            data_list = list(reader)[1:] # Skip the first line
+        try:
+            x = [float(data_list[i][1]) for i in x_range] # len(x_range)*1 list here
+            coordinate = [float(data_list[i][0]) for i in x_range]
+        except IndexError:
+            print("IndexError, please check "+subdir+'/'+filename)
+            continue
+        X.append(x) # m*n list
+        coordinates.append(coordinate)
         y = re.findall('training(\d+)_.*?.csv', filename)[-1] # starts from 0 maybe
         # y_one_hot = np.eye(9, dtype=int)[int(y) - 1]
         if y_starts_from == 0:
             Y.append(int(y)) # where y is 0~(num_classes-1)
         else:
             Y.append(int(y) - 1) #where y is 1~num_classes
-        with open(subdir+'/'+filename, 'r') as f:
-            reader = csv.reader(f)
-            data_list = list(reader)[1:] # Skip the first line
-        try:
-            x = [float(data_list[i][1]) for i in x_range] # len(x_range)*1 list here
-        except IndexError:
-            print("IndexError, please check "+subdir+'/'+filename)
-        coordinate = [float(data_list[i][0]) for i in x_range]
-        X.append(x) # m*n list
-        coordinates.append(coordinate)
-        # print(subdir+'/'+filename)
     Y_one_hot = to_categorical(Y, num_classes=num_classes)
     X_np = np.array(X) # m*n numpy array
     Y_np = np.array(Y_one_hot) # m*c numpy array
@@ -196,7 +196,7 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = 'C:/code/ENML/model/20180407_r_class5_len128'
+    dataset_dir = 'C:/code/ENML/data/20171117'
     # dataset_dir = 'C:/code/ENML/model/20171117_class5_len128'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
@@ -205,13 +205,13 @@ if __name__ == '__main__':
 
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 62
+    num_slices = 1
     num_classes = 5
-    len_slice = 128
-    get_data = 0 # decide get and load or just load
-    norm =  1
+    len_slice = 7990
+    get_data = 1 # decide get and load or just load
+    norm =  0
     vis = 1
-    vis_std = 1 # visualize standard deviation, FFT * vis_std = 0!!!
+    vis_std = 0 # visualize standard deviation, FFT * vis_std = 0!!!
     neg = 0
     FFT = 0
     FFT_norm = 0
@@ -240,7 +240,7 @@ if __name__ == '__main__':
 
     # Visualization
     if vis:
-        num_pick = 500
+        num_pick = 50
         # num_pick = 10 * num_classes * num_slices
         plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=0.6)
 
