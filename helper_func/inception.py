@@ -248,6 +248,7 @@ if __name__ == '__main__':
     save_dir = root_dir+'/'+model_name
     FFT = 0
     FFT_norm = 1 # Whether_to_normalize_input_after_fft
+    FFT_range = int((10 / 500) * (len_slice / 2)) # 0~FFT_range
     m = 100 # Expected training set size, 0 means all here
 
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
@@ -265,23 +266,23 @@ if __name__ == '__main__':
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
     test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-    train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-    test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     if FFT:
         train_x_set, freq = fft(train_x_set, coordinates_train)
         test_x_set, freq = fft(test_x_set, coordinates_test)
         half = int(train_x_set.shape[1]/2)
-        train_x_set = np.abs(train_x_set[:, :half])
-        test_x_set = np.abs(test_x_set[:, :half])
-        freq = freq[:, :half]
+        train_x_set = np.abs(train_x_set[:, :FFT_range])
+        test_x_set = np.abs(test_x_set[:, :FFT_range])
+        freq = freq[:, :FFT_range]
         # plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
         if FFT_norm:
             train_x_set = preprocessing.scale(train_x_set)
             test_x_set = preprocessing.scale(test_x_set)
         else:
-            train_x_set = np.multiply(train_x_set, 1e7)
-            test_x_set = np.multiply(test_x_set, 1e7)
-
+            train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+            test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+    else:
+        train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+        test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
     # which seems to be (m, n, 1) in this case.
     train_x_set = train_x_set.reshape(train_x_set.shape[0], train_x_set.shape[1], 1)

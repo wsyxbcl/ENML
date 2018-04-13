@@ -196,7 +196,7 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = 'C:/code/ENML/data/20171117'
+    dataset_dir = 'C:/code/ENML/data/20180407_r'
     # dataset_dir = 'C:/code/ENML/model/20171117_class5_len128'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
@@ -205,16 +205,17 @@ if __name__ == '__main__':
 
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 1
+    num_slices = 5
     num_classes = 5
-    len_slice = 7990
+    len_slice = 1024
     get_data = 1 # decide get and load or just load
     norm =  0
     vis = 1
-    vis_std = 0 # visualize standard deviation, FFT * vis_std = 0!!!
+    vis_std = 1 # visualize standard deviation, FFT * vis_std = 0!!!
     neg = 0
-    FFT = 0
-    FFT_norm = 0
+    FFT = 1
+    FFT_norm = 1
+    FFT_range = int((10 / 500) * (len_slice / 2)) # 0~FFT_range
 
     if get_data:
         X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from)
@@ -240,14 +241,15 @@ if __name__ == '__main__':
 
     # Visualization
     if vis:
-        num_pick = 50
+        num_pick = 500
         # num_pick = 10 * num_classes * num_slices
         plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig.png', trans=0.6)
 
-        # for i in range(test_x_set.shape[0]):
-        #     baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
-        # for i in range(train_x_set.shape[0]):
-        #     baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
+        for i in range(test_x_set.shape[0]):
+            baseline_values, test_x_set[i] = remove_baseline(test_x_set[i], degree=1)
+        for i in range(train_x_set.shape[0]):
+            baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
+        plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig_baseline.png', trans=0.6)
 
         train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
         test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
@@ -260,12 +262,12 @@ if __name__ == '__main__':
             test_x_set = np.abs(test_x_set[:, :half])
             freq = freq[:, :half]
             if FFT_norm:
-                train_x_set = preprocessing.scale(train_x_set)
-                test_x_set = preprocessing.scale(test_x_set)
+                train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+                test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
             else:
                 train_x_set = np.multiply(train_x_set, 1e7)
                 test_x_set = np.multiply(test_x_set, 1e7) 
-            plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], freq, dataset_dir+'/plot', 'test_fft_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
+            plot_dataset(test_x_set[:num_pick, :FFT_range], test_y_set[:num_pick], freq[:, :FFT_range], dataset_dir+'/plot', 'test_fft_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
             test_x_set_fft_avg, test_y_set_fft_avg = fft_avg(test_x_set[:], test_y_set[:], num_classes)
             plot_dataset(test_x_set_fft_avg, test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
             plot_dataset(test_x_set_fft_avg - test_x_set_fft_avg[0, :], test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_contrast_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
