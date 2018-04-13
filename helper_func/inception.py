@@ -177,11 +177,9 @@ def simple_inception(input_shape, num_classes):
 
 def simple_CNN(input_shape, num_classes, dropout_keep_prob):
     inputs = Input(input_shape)
-    net = conv1d_bn(inputs, 64, 3, strides=1, padding='same')
+    net = conv1d_bn(inputs, 16, 3, strides=1, padding='same')
     net = MaxPooling1D(2, strides=2, padding='valid')(net)
-    net = conv1d_bn(net, 128, 3, padding='same')
-    net = MaxPooling1D(2, strides=2, padding='valid')(net)
-    net = conv1d_bn(net, 256, 3, padding='same')
+    net = conv1d_bn(net, 64, 3, padding='same')
     net = MaxPooling1D(2, strides=2, padding='valid')(net)
     # net = conv1d_bn(net, 512, 3, padding='same')
     # net = MaxPooling1D(2, strides=2, padding='valid')(net)
@@ -235,21 +233,22 @@ def test_analysis(model, test_x_set, test_y_set, save_dir, filename):
     plt.close(fig)
 
 if __name__ == '__main__':
-    model_name = 'GPU_k80_simple_cnn_baseline1_fft0_batch256_keepprob_50_lr_001_size100'
+    model_name = 'GPU_k80_simple_cnn_baseline1_fft0_batch256_keepprob_50_lr_001_size0'
     # model_name = 'CPU_simple_cnn_baseline1_fft0_batch256_testdropout'
-    root_dir = '/home/ubuntu/ENML/model/20180407_r_class5_len128'
+    root_dir = '/home/ubuntu/ENML/model/20180407_reclassified_class5_len2048'
     # root_dir = '/mnt/t/college/last/finaldesign/ENML/model/20171201_class5_len512'
     test_ratio = 0.01
     validation_ratio = 0.25 # splited from traning set
-    training_epoch = 256
+    training_epoch = 512
     batch_size = 256
     lr = 0.001
     dropout_keep_prob = 0.5
     save_dir = root_dir+'/'+model_name
-    FFT = 0
-    FFT_norm = 1 # Whether_to_normalize_input_after_fft
+    FFT = 1
+    FFT_norm = 0 # Whether_to_normalize_input_after_fft
+    len_slice = 2048
     FFT_range = int((10 / 500) * (len_slice / 2)) # 0~FFT_range
-    m = 100 # Expected training set size, 0 means all here
+    m = 0 # Expected training set size, 0 means all here
 
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(root_dir+'/'+'dataset', test_ratio=test_ratio)
     if m:
@@ -278,6 +277,9 @@ if __name__ == '__main__':
             train_x_set = preprocessing.scale(train_x_set)
             test_x_set = preprocessing.scale(test_x_set)
         else:
+            train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+            test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+ 
             train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
             test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     else:
