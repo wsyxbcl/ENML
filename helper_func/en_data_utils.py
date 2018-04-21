@@ -133,8 +133,7 @@ def plot_dataset(X, Y, coordinates, save_dir, filename, xlabel='time/ms', ylabel
 def fft(X, coordinates):
     n = X.shape[1]
     freq = np.copy(coordinates)
-    # Convert ms to s
-    timestep = (coordinates[0,1]-coordinates[0,0]) * 0.001
+    timestep = (coordinates[0,1]-coordinates[0,0])
     X_fft = np.fft.fft(X, axis=1)
     freq[:] = np.fft.fftfreq(n, d=timestep)
     return X_fft, freq
@@ -196,8 +195,8 @@ def get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_
     return X_np, Y_np, coordinates_np
 
 if __name__ == '__main__':
-    dataset_dir = 'C:/code/ENML/data/20180407_r'
-    # dataset_dir = 'C:/code/ENML/model/20171117_class5_len128'
+    dataset_dir = 'G:/finaldesign/ENML/data/20180421_reclassified'
+    # dataset_dir = 'C:/code/ENML/model/20180417_class5_len512'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/data/CA_ascii/20171228/_demo'
     # dataset_dir = '/mnt/t/college/last/finaldesign/ENML/code/test/test_slice'
     # dataset_dir = 'T:/college/last/finaldesign/ENML/model/FFTfreq'
@@ -205,17 +204,17 @@ if __name__ == '__main__':
 
     raw_data_dir = dataset_dir+'/raw'
     y_starts_from = 0 # IMPORTANT, 0 or 1 only. A temporary solution for y_starts promlem!!!
-    num_slices = 5
+    num_slices = 15
     num_classes = 5
-    len_slice = 1024
+    len_slice = 128
     get_data = 1 # decide get and load or just load
-    norm =  0
+    norm =  1
     vis = 1
-    vis_std = 1 # visualize standard deviation, FFT * vis_std = 0!!!
+    vis_std = 0 # visualize standard deviation, FFT * vis_std = 0!!!
     neg = 0
     FFT = 1
-    FFT_norm = 1
-    FFT_range = int((10 / 500) * (len_slice / 2)) # 0~FFT_range
+    FFT_norm = 0
+    FFT_range = int((5 / 5) * (len_slice / 2)) # 0~FFT_range
 
     if get_data:
         X_np, Y_np, coordinates_np = get_slice_concat(raw_data_dir, num_slices, len_slice, num_classes, y_starts_from)
@@ -226,8 +225,8 @@ if __name__ == '__main__':
     train_x_set, train_y_set, coordinates_train, test_x_set, test_y_set, coordinates_test = load_dataset(dataset_dir+'/dataset')
 
     # Do not know WTF is wrong with the IviumStat software here
-    coordinates_train = coordinates_train * 5
-    coordinates_test = coordinates_test * 5
+    # coordinates_train = coordinates_train * 5
+    # coordinates_test = coordinates_test * 5
 
 
     print("Shape of train_x_set:")
@@ -250,9 +249,14 @@ if __name__ == '__main__':
         for i in range(train_x_set.shape[0]):
             baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
         plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_orig_baseline.png', trans=0.6)
+        
+        if norm:
+            train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+            test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+            train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+            test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
 
-        train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-        test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+            plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
 
         if FFT:
             train_x_set, freq = fft(train_x_set, coordinates_train)
@@ -262,6 +266,8 @@ if __name__ == '__main__':
             test_x_set = np.abs(test_x_set[:, :half])
             freq = freq[:, :half]
             if FFT_norm:
+                train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
+                test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
                 train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
                 test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
             else:
@@ -269,19 +275,8 @@ if __name__ == '__main__':
                 test_x_set = np.multiply(test_x_set, 1e7) 
             plot_dataset(test_x_set[:num_pick, :FFT_range], test_y_set[:num_pick], freq[:, :FFT_range], dataset_dir+'/plot', 'test_fft_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)   
             test_x_set_fft_avg, test_y_set_fft_avg = fft_avg(test_x_set[:], test_y_set[:], num_classes)
-            plot_dataset(test_x_set_fft_avg, test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
-            plot_dataset(test_x_set_fft_avg - test_x_set_fft_avg[0, :], test_y_set_fft_avg, freq, dataset_dir+'/plot', 'test_fft_avg_contrast_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
-
-        else:
-            if norm:
-                train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-                test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-                train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-                test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
-            else:
-                train_x_set = np.multiply(train_x_set, 1e8)
-                test_x_set = np.multiply(test_x_set, 1e8)
-            plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
+            plot_dataset(test_x_set_fft_avg[:, :FFT_range], test_y_set_fft_avg, freq[:, :FFT_range], dataset_dir+'/plot', 'test_fft_avg_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
+            plot_dataset(test_x_set_fft_avg[:, :FFT_range] - test_x_set_fft_avg[0, :FFT_range], test_y_set_fft_avg, freq[:, :FFT_range], dataset_dir+'/plot', 'test_fft_avg_contrast_norm'+str(FFT_norm)+'.png', xlabel='Freq/Hz', ylabel='A', trans=1)
 
     if vis_std:
         # train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
