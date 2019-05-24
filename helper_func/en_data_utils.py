@@ -252,9 +252,9 @@ if __name__ == '__main__':
         
         if norm:
             train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-            test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+            test_x_set = test_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
             train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-            test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+            test_x_set = test_x_set/np.std(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
 
             plot_dataset(test_x_set[:num_pick], test_y_set[:num_pick], coordinates_test[:num_pick], dataset_dir+'/plot', 'test_x_normed.png', trans=1)
 
@@ -267,9 +267,9 @@ if __name__ == '__main__':
             freq = freq[:, :half]
             if FFT_norm:
                 train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-                test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+                test_x_set = test_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
                 train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-                test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+                test_x_set = test_x_set/np.std(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
             else:
                 train_x_set = np.multiply(train_x_set, 1e7)
                 test_x_set = np.multiply(test_x_set, 1e7) 

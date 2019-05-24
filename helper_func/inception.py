@@ -264,7 +264,7 @@ if __name__ == '__main__':
         baseline_values, train_x_set[i] = remove_baseline(train_x_set[i], degree=1)
 
     train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-    test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+    test_x_set = test_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     if FFT:
         train_x_set, freq = fft(train_x_set, coordinates_train)
         test_x_set, freq = fft(test_x_set, coordinates_test)
@@ -274,17 +274,19 @@ if __name__ == '__main__':
         freq = freq[:, :FFT_range]
         # plot_dataset(test_x_set, test_y_set, freq, save_dir+'/plot', 'test_fft', xlabel='Freq/Hz', ylabel='A')
         if FFT_norm:
-            train_x_set = preprocessing.scale(train_x_set)
-            test_x_set = preprocessing.scale(test_x_set)
+            scaler = preprocessing.StandardScaler().fit(train_x_set)
+            train_x_set = scalar.transform(train_x_set)
+            test_x_set = scalar.transform(test_x_set)
         else:
+            # WTF was I doing here???
             train_x_set = train_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-            test_x_set = test_x_set - np.mean(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+            test_x_set = test_x_set - np.mean(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
  
             train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-            test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+            test_x_set = test_x_set/np.std(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     else:
         train_x_set = train_x_set/np.std(train_x_set, axis=1).reshape(np.shape(train_x_set)[0], 1)
-        test_x_set = test_x_set/np.std(test_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
+        test_x_set = test_x_set/np.std(train_x_set, axis=1).reshape(np.shape(test_x_set)[0], 1)
     # Important here, for input shape of Conv1D is (batch_size, steps, input_dim)
     # which seems to be (m, n, 1) in this case.
     train_x_set = train_x_set.reshape(train_x_set.shape[0], train_x_set.shape[1], 1)
